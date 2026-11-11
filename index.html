@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#f7f8f5" />
+<title>GYEONGJU — 우리 넷의 여행</title>
+<style>
+:root{--bg:#f7f8f5;--paper:#fff;--ink:#202820;--muted:#788078;--line:#e8ebe5;--green:#365c49;--green2:#e8f0e9;--sand:#f3eee5;--orange:#bd7955;--shadow:0 12px 34px rgba(35,53,40,.07);--r:20px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
+.app{max-width:1180px;margin:auto;padding:22px 22px 90px}
+.top{display:flex;justify-content:space-between;align-items:center;margin-bottom:22px}.brand{font-size:12px;letter-spacing:.19em;font-weight:800;color:var(--green)}.topright{display:flex;gap:8px;align-items:center}.pill{border:1px solid var(--line);background:white;border-radius:999px;padding:9px 13px;font-size:12px;color:var(--muted)}
+.hero{background:#263e32;color:white;border-radius:28px;padding:28px 32px;display:grid;grid-template-columns:1.1fr .9fr;gap:20px;overflow:hidden;position:relative;min-height:230px}
+.eyebrow{font-size:10px;letter-spacing:.22em;color:#c6d7c8;font-weight:700}.hero h1{font-family:Georgia,serif;font-weight:500;font-size:clamp(34px,5vw,54px);line-height:1.05;margin:14px 0 10px}.hero p{color:#d0dbd1;font-size:13px;margin:0}.heroStats{display:flex;gap:25px;margin-top:28px}.stat strong{display:block;font:26px Georgia,serif}.stat span{font-size:10px;letter-spacing:.12em;color:#c6d7c8}.heroArt{align-self:stretch;border-radius:18px;overflow:hidden;min-height:170px;background:linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.01)),url('https://images.unsplash.com/photo-1609766857041-ed402ea8069a?auto=format&fit=crop&w=1000&q=85') center/cover;position:relative}.heroArt:after{content:"GYEONGJU, KOREA";position:absolute;bottom:14px;right:16px;font-size:9px;letter-spacing:.2em;color:white;text-shadow:0 1px 5px #333}
+.nav{display:flex;gap:7px;overflow:auto;margin:22px 0 18px;padding-bottom:2px}.nav button{white-space:nowrap;padding:11px 16px;border-radius:999px;background:transparent;color:var(--muted);font-size:13px}.nav button.active{background:var(--green);color:white}
+.panel{display:none}.panel.active{display:block}.sectionHead{display:flex;justify-content:space-between;align-items:end;margin:12px 0 14px;gap:12px}.sectionHead h2{font-size:20px;margin:0;font-weight:700}.sectionHead p{margin:5px 0 0;color:var(--muted);font-size:12px}
+.btn{background:var(--green);color:white;border-radius:12px;padding:11px 15px;font-size:12px;font-weight:700}.btn.light{background:var(--green2);color:var(--green)}.btn.ghost{background:white;border:1px solid var(--line);color:var(--ink)}.btn.danger{background:#fff0ed;color:#a44c3d}
+.mapLayout{display:grid;grid-template-columns:1fr 340px;gap:15px}.mapBox{height:570px;border-radius:var(--r);overflow:hidden;background:#e8ece7;box-shadow:var(--shadow);position:relative}.mapPlaceholder{height:100%;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;color:#627066;background:linear-gradient(135deg,#e8eee8,#f0eee7)}.mapPlaceholder strong{display:block;color:var(--green);font-size:17px;margin-bottom:8px}.mapPlaceholder p{font-size:12px;line-height:1.7}.mapSide{display:flex;flex-direction:column;gap:12px}.card{background:var(--paper);border:1px solid var(--line);border-radius:var(--r);padding:17px;box-shadow:var(--shadow)}.card h3{font-size:14px;margin:0 0 12px}.filterRow{display:flex;gap:6px;flex-wrap:wrap}.filter{font-size:11px;padding:7px 10px;border-radius:999px;background:#f3f5f1;color:#667168}.filter.active{background:var(--green2);color:var(--green);font-weight:700}
+.placeList{display:flex;flex-direction:column;gap:9px;overflow:auto;max-height:415px}.place{border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;gap:10px}.placeMain{flex:1;min-width:0}.placeName{font-weight:700;font-size:13px}.placeMeta{font-size:10px;color:var(--muted);margin-top:4px}.placeActions{display:flex;gap:5px;margin-top:9px;flex-wrap:wrap}.mini{background:#f4f6f2;color:#526257;padding:6px 8px;border-radius:8px;font-size:10px}.mini.on{background:#fbece8;color:#b55d4b}.empty{color:var(--muted);font-size:12px;text-align:center;padding:28px 12px;line-height:1.7}
+.formGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}.field{display:flex;flex-direction:column;gap:6px}.field.full{grid-column:1/-1}.field label{font-size:11px;color:var(--muted);font-weight:700}.field input,.field select,.field textarea{border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff;outline:none;font-size:13px;color:var(--ink);width:100%}.field textarea{min-height:72px;resize:vertical}.modalBack{display:none;position:fixed;inset:0;background:#18241dcc;z-index:20;align-items:center;justify-content:center;padding:16px}.modalBack.show{display:flex}.modal{width:min(520px,100%);background:white;border-radius:22px;padding:22px;max-height:90vh;overflow:auto}.modalTop{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}.modalTop h3{margin:0;font-size:18px}.close{background:#f1f3ef;border-radius:50%;width:32px;height:32px;font-size:18px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}.day{background:white;border:1px solid var(--line);border-radius:18px;padding:17px}.dayHead{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}.dayHead strong{font-size:14px}.timeline{display:flex;flex-direction:column;gap:8px}.planItem{display:flex;gap:10px;align-items:center;padding:10px;background:#f8f9f6;border-radius:11px}.planTime{font-size:10px;color:var(--green);font-weight:800;min-width:42px}.planName{font-size:12px;font-weight:650;flex:1}.moneySummary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}.moneySummary .card{padding:14px}.moneySummary span{font-size:10px;color:var(--muted)}.moneySummary strong{display:block;font-size:19px;margin-top:6px}.expense{display:flex;justify-content:space-between;gap:10px;padding:13px 0;border-bottom:1px solid var(--line);font-size:12px}.expense:last-child{border:0}.tag{font-size:10px;background:var(--sand);padding:5px 8px;border-radius:999px;color:#806b54}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:#263e32;color:white;padding:12px 17px;border-radius:999px;font-size:12px;z-index:40;opacity:0;pointer-events:none;transition:.25s}.toast.show{opacity:1}.setupNote{font-size:11px;line-height:1.7;color:var(--muted);background:#f8f9f6;border-radius:12px;padding:12px;margin-top:12px}.connection{font-size:10px;color:var(--muted)}.dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:#d29b52;margin-right:5px}.dot.ok{background:#4d986b}
+@media(max-width:800px){.app{padding:14px 13px 85px}.hero{grid-template-columns:1fr;padding:23px;min-height:auto}.heroArt{height:130px}.heroStats{margin-top:20px}.mapLayout{grid-template-columns:1fr}.mapBox{height:390px}.mapSide{display:grid;grid-template-columns:1fr}.placeList{max-height:330px}.grid2{grid-template-columns:1fr}.sectionHead{align-items:center}.moneySummary{gap:7px}.moneySummary .card{padding:11px}.moneySummary strong{font-size:15px}}
+@media(max-width:420px){.heroStats{gap:17px}.stat strong{font-size:22px}.pill{padding:8px 10px}.formGrid{grid-template-columns:1fr}.field.full{grid-column:auto}.mapBox{height:340px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="top">
+    <div class="brand">GJ / TRAVEL CLUB</div>
+    <div class="topright"><span class="connection" id="connection"><i class="dot"></i>로컬 모드</span><button class="pill" onclick="openSetup()">공유 설정</button></div>
+  </header>
+  <section class="hero">
+    <div>
+      <div class="eyebrow">A LITTLE GETAWAY WITH FOUR</div>
+      <h1>경주,<br>우리 넷의 여행</h1>
+      <p>좋아하는 장소를 모으고, 함께 고르고, 오래 기억하기.</p>
+      <div class="heroStats">
+        <div class="stat"><strong id="statPeople">04</strong><span>TRAVELERS</span></div>
+        <div class="stat"><strong id="statPlaces">00</strong><span>SAVED PLACES</span></div>
+        <div class="stat"><strong id="statDone">00</strong><span>VISITED</span></div>
+      </div>
+    </div>
+    <div class="heroArt"></div>
+  </section>
+  <nav class="nav">
+    <button class="active" data-tab="map">여행 지도</button>
+    <button data-tab="wishlist">가고 싶어요</button>
+    <button data-tab="schedule">여행 일정</button>
+    <button data-tab="expenses">여행 경비</button>
+  </nav>
+
+  <section class="panel active" id="panel-map">
+    <div class="sectionHead"><div><h2>우리의 경주 지도</h2><p>네 명이 저장한 장소를 한눈에 확인해요.</p></div><button class="btn" onclick="openPlace()">＋ 장소 추가</button></div>
+    <div class="mapLayout">
+      <div class="mapBox" id="map">
+        <div class="mapPlaceholder"><div><strong>Google Maps 연결하기</strong><p>공유 설정에서 Google Maps API 키를 입력하면<br>경주 지도가 여기에 표시돼요.</p></div></div>
+      </div>
+      <aside class="mapSide">
+        <div class="card"><h3>장소 카테고리</h3><div class="filterRow" id="filters"><button class="filter active" data-filter="전체">전체</button><button class="filter" data-filter="맛집">맛집</button><button class="filter" data-filter="카페">카페</button><button class="filter" data-filter="관광지">관광지</button><button class="filter" data-filter="숙소">숙소</button></div></div>
+        <div class="card"><h3>저장한 장소 <span id="placeCount" style="color:#8b958b;font-weight:400"></span></h3><div class="placeList" id="mapPlaces"></div></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="panel" id="panel-wishlist">
+    <div class="sectionHead"><div><h2>가고 싶은 곳</h2><p>마음에 드는 장소에 투표하고 함께 결정해요.</p></div><button class="btn" onclick="openPlace()">＋ 장소 추가</button></div>
+    <div class="card" style="margin-bottom:14px"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h3 style="margin-bottom:4px">우리의 인기 장소</h3><span style="font-size:11px;color:var(--muted)">좋아요를 가장 많이 받은 장소</span></div><span class="tag">LIVE VOTE</span></div><div id="popular"></div></div>
+    <div id="wishlist" class="grid2"></div>
+  </section>
+
+  <section class="panel" id="panel-schedule">
+    <div class="sectionHead"><div><h2>여행 일정</h2><p>저장한 장소를 날짜와 시간에 맞춰 배치해요.</p></div><button class="btn" onclick="openPlan()">＋ 일정 추가</button></div>
+    <div id="scheduleList" class="grid2"></div>
+  </section>
+
+  <section class="panel" id="panel-expenses">
+    <div class="sectionHead"><div><h2>여행 경비</h2><p>함께 쓴 비용을 기록하고 1인당 금액을 확인해요.</p></div><button class="btn" onclick="openExpense()">＋ 지출 추가</button></div>
+    <div class="moneySummary">
+      <div class="card"><span>총 지출</span><strong id="totalExpense">₩0</strong></div>
+      <div class="card"><span>1인당 부담</span><strong id="perPerson">₩0</strong></div>
+      <div class="card"><span>지출 건수</span><strong id="expenseCount">0건</strong></div>
+    </div>
+    <div class="card"><h3>지출 내역</h3><div id="expenseList"></div></div>
+  </section>
+</div>
+
+<div class="modalBack" id="placeModal"><div class="modal">
+  <div class="modalTop"><h3>새 장소 저장</h3><button class="close" onclick="closeModal('placeModal')">×</button></div>
+  <div class="formGrid">
+    <div class="field full"><label>장소 검색 (Google Maps 연결 시 검색 가능)</label><input id="placeSearch" placeholder="예: 황리단길 카페, 경주 맛집"><button class="btn light" type="button" onclick="searchPlace()">지도에서 검색</button><div id="searchResults"></div></div>
+    <div class="field full"><label>장소명 *</label><input id="pName" placeholder="장소 이름"></div>
+    <div class="field"><label>카테고리</label><select id="pCategory"><option>맛집</option><option>카페</option><option>관광지</option><option>숙소</option><option>기타</option></select></div>
+    <div class="field"><label>저장한 사람</label><select id="pBy"><option>나</option><option>친구 1</option><option>친구 2</option><option>친구 3</option></select></div>
+    <div class="field full"><label>주소 또는 구글맵 링크</label><input id="pAddress" placeholder="주소 / 지도 링크 (선택)"></div>
+    <div class="field full"><label>추천 메모</label><textarea id="pNote" placeholder="왜 가고 싶은지 적어주세요."></textarea></div>
+    <div class="field"><label>위도 (지도 핀용)</label><input id="pLat" type="number" step="any" placeholder="선택"></div>
+    <div class="field"><label>경도 (지도 핀용)</label><input id="pLng" type="number" step="any" placeholder="선택"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="savePlace()">저장하기</button><button class="btn ghost" onclick="closeModal('placeModal')">취소</button></div>
+</div></div>
+
+<div class="modalBack" id="planModal"><div class="modal">
+  <div class="modalTop"><h3>일정 추가</h3><button class="close" onclick="closeModal('planModal')">×</button></div>
+  <div class="formGrid">
+    <div class="field"><label>날짜</label><select id="planDay"><option value="DAY 1">DAY 1</option><option value="DAY 2">DAY 2</option><option value="DAY 3">DAY 3</option></select></div>
+    <div class="field"><label>시간</label><input id="planTime" type="time" value="11:00"></div>
+    <div class="field full"><label>장소 / 일정 *</label><input id="planName" placeholder="예: 황리단길 점심"></div>
+    <div class="field full"><label>메모</label><input id="planNote" placeholder="예약 정보, 준비물 등"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="savePlan()">일정 저장</button><button class="btn ghost" onclick="closeModal('planModal')">취소</button></div>
+</div></div>
+
+<div class="modalBack" id="expenseModal"><div class="modal">
+  <div class="modalTop"><h3>지출 추가</h3><button class="close" onclick="closeModal('expenseModal')">×</button></div>
+  <div class="formGrid">
+    <div class="field full"><label>항목 *</label><input id="eName" placeholder="예: 저녁 식사"></div>
+    <div class="field"><label>금액 *</label><input id="eAmount" type="number" min="0" placeholder="예: 80000"></div>
+    <div class="field"><label>결제한 사람</label><select id="eBy"><option>나</option><option>친구 1</option><option>친구 2</option><option>친구 3</option></select></div>
+    <div class="field"><label>카테고리</label><select id="eCategory"><option>식비</option><option>카페</option><option>교통</option><option>숙소</option><option>쇼핑</option><option>기타</option></select></div>
+    <div class="field"><label>날짜</label><input id="eDate" type="date"></div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="saveExpense()">지출 저장</button><button class="btn ghost" onclick="closeModal('expenseModal')">취소</button></div>
+</div></div>
+
+<div class="modalBack" id="setupModal"><div class="modal">
+  <div class="modalTop"><h3>공유 및 지도 설정</h3><button class="close" onclick="closeModal('setupModal')">×</button></div>
+  <div class="field"><label>Google Maps JavaScript API 키</label><input id="mapsKey" placeholder="AIza..."></div>
+  <div class="field" style="margin-top:12px"><label>Firebase 설정 JSON</label><textarea id="firebaseConfig" style="min-height:130px" placeholder='{"apiKey":"...","authDomain":"...","projectId":"...","appId":"..."}'></textarea></div>
+  <div class="setupNote"><b>실시간 공유 연결 방법</b><br>1. Google Cloud에서 Maps JavaScript API와 Places API를 활성화하고 API 키를 발급하세요.<br>2. Firebase 프로젝트에서 Firestore Database를 생성하세요.<br>3. 웹 앱 설정의 Firebase config JSON을 붙여넣으세요.<br>4. 저장 후 페이지를 새로고침하면 공유 연결을 시도합니다.<br><br>현재 설정이 없으면 이 브라우저의 로컬 저장 모드로 작동합니다. 다른 기기와 실시간 공유하려면 Firebase 설정과 Firestore 보안 규칙이 필요합니다.</div>
+  <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="saveSettings()">설정 저장 및 연결</button><button class="btn ghost" onclick="closeModal('setupModal')">닫기</button></div>
+</div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+const $=id=>document.getElementById(id);
+const STORE='gyeongju-trip-v1', SETTINGS='gyeongju-settings-v1';
+let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[]}');
+let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
+let db=null, unsubscribe=null, map=null, markers=[], activeFilter='전체', selectedPlace=null, searchService=null;
+const colors={'나':'#557b62','친구 1':'#c17b58','친구 2':'#7886a5','친구 3':'#b18a48'};
+const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
+function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
+function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2200)}
+window.openSetup=()=>{$('mapsKey').value=settings.mapsKey||'';$('firebaseConfig').value=settings.firebaseConfig||'';$('setupModal').classList.add('show')};
+window.openPlace=()=>{$('placeModal').classList.add('show');$('searchResults').innerHTML=''};
+window.openPlan=()=>{$('planModal').classList.add('show')};
+window.openExpense=()=>{$('expenseModal').classList.add('show');$('eDate').value=new Date().toISOString().slice(0,10)};
+window.closeModal=id=>$(id).classList.remove('show');
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='map'&&map)google.maps.event.trigger(map,'resize')}));
+document.querySelectorAll('.filter').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.filter').forEach(x=>x.classList.remove('active'));b.classList.add('active');activeFilter=b.dataset.filter;render()}));
+window.savePlace=()=>{let name=$('pName').value.trim();if(!name)return toast('장소명을 입력해 주세요.');let p={id:crypto.randomUUID(),name,category:$('pCategory').value,by:$('pBy').value,address:$('pAddress').value.trim(),note:$('pNote').value.trim(),lat:Number($('pLat').value)||null,lng:Number($('pLng').value)||null,likes:[],done:false,created:Date.now()};state.places.push(p);persist();closeModal('placeModal');['pName','pAddress','pNote','pLat','pLng','placeSearch'].forEach(x=>$(x).value='');toast('장소를 저장했어요.')};
+window.savePlan=()=>{let name=$('planName').value.trim();if(!name)return toast('일정명을 입력해 주세요.');state.plans.push({id:crypto.randomUUID(),day:$('planDay').value,time:$('planTime').value,name,note:$('planNote').value.trim()});state.plans.sort((a,b)=>a.day.localeCompare(b.day)||a.time.localeCompare(b.time));persist();closeModal('planModal');$('planName').value='';$('planNote').value='';toast('일정을 저장했어요.')};
+window.saveExpense=()=>{let name=$('eName').value.trim(),amount=Number($('eAmount').value);if(!name||!amount)return toast('항목과 금액을 입력해 주세요.');state.expenses.push({id:crypto.randomUUID(),name,amount,by:$('eBy').value,category:$('eCategory').value,date:$('eDate').value});persist();closeModal('expenseModal');$('eName').value='';$('eAmount').value='';toast('지출을 저장했어요.')};
+window.toggleLike=id=>{let p=state.places.find(x=>x.id===id);if(!p)return;let who=localStorage.getItem('tripWho')||'나';p.likes=p.likes||[];p.likes=p.likes.includes(who)?p.likes.filter(x=>x!==who):[...p.likes,who];persist()};
+window.toggleDone=id=>{let p=state.places.find(x=>x.id===id);if(p){p.done=!p.done;persist();toast(p.done?'방문 완료!':'방문 상태를 변경했어요.')}};
+window.deletePlace=id=>{if(confirm('이 장소를 삭제할까요?')){state.places=state.places.filter(x=>x.id!==id);persist()}};
+window.deletePlan=id=>{state.plans=state.plans.filter(x=>x.id!==id);persist()};
+window.deleteExpense=id=>{state.expenses=state.expenses.filter(x=>x.id!==id);persist()};
+window.saveSettings=async()=>{settings={mapsKey:$('mapsKey').value.trim(),firebaseConfig:$('firebaseConfig').value.trim()};localStorage.setItem(SETTINGS,JSON.stringify(settings));closeModal('setupModal');await connectServices();};
+function render(){
+ $('statPlaces').textContent=String(state.places.length).padStart(2,'0');$('statDone').textContent=String(state.places.filter(p=>p.done).length).padStart(2,'0');
+ $('placeCount').textContent=`(${state.places.length})`;
+ let places=state.places.filter(p=>activeFilter==='전체'||p.category===activeFilter);
+ $('mapPlaces').innerHTML=places.length?places.map(placeHTML).join(''):'<div class="empty">아직 저장한 장소가 없어요.<br>첫 번째 장소를 추가해 보세요.</div>';
+ $('wishlist').innerHTML=state.places.length?state.places.slice().sort((a,b)=>(b.likes?.length||0)-(a.likes?.length||0)).map(p=>`<div class="card"><div style="display:flex;justify-content:space-between;gap:8px"><span class="tag">${esc(p.category)}</span><span style="font-size:10px;color:var(--muted)">by ${esc(p.by)}</span></div><h3 style="margin:12px 0 5px">${esc(p.name)}</h3><div style="font-size:11px;color:var(--muted)">${esc(p.note||p.address||'추천 메모가 없어요.')}</div><div style="display:flex;gap:7px;margin-top:13px;align-items:center"><button class="mini ${(p.likes||[]).includes('나')?'on':''}" onclick="toggleLike('${p.id}')">♥ ${(p.likes||[]).length} 좋아요</button><button class="mini" onclick="toggleDone('${p.id}')">${p.done?'✓ 방문 완료':'방문 체크'}</button><button class="mini" onclick="deletePlace('${p.id}')">삭제</button></div></div>`).join(''):'<div class="card empty">장소를 저장하면 네 명의 위시리스트가 여기에 모여요.</div>';
+ $('popular').innerHTML=state.places.length?state.places.slice().sort((a,b)=>(b.likes?.length||0)-(a.likes?.length||0)).slice(0,3).map((p,i)=>`<div class="expense"><span>${i+1}. ${esc(p.name)}</span><b>♥ ${(p.likes||[]).length}</b></div>`).join(''):'<div class="empty">아직 투표할 장소가 없어요.</div>';
+ let days=['DAY 1','DAY 2','DAY 3'];$('scheduleList').innerHTML=days.map(d=>`<div class="day"><div class="dayHead"><strong>${d}</strong><span class="tag">${state.plans.filter(p=>p.day===d).length} PLANS</span></div><div class="timeline">${state.plans.filter(p=>p.day===d).map(p=>`<div class="planItem"><span class="planTime">${esc(p.time)}</span><span class="planName">${esc(p.name)}${p.note?`<small style="display:block;color:#8a938a;font-weight:400;margin-top:3px">${esc(p.note)}</small>`:''}</span><button class="mini" onclick="deletePlan('${p.id}')">×</button></div>`).join('')||'<div class="empty">아직 등록된 일정이 없어요.</div>'}</div></div>`).join('');
+ let total=state.expenses.reduce((s,e)=>s+Number(e.amount),0);$('totalExpense').textContent=money(total);$('perPerson').textContent=money(Math.ceil(total/4));$('expenseCount').textContent=state.expenses.length+'건';
+ $('expenseList').innerHTML=state.expenses.length?state.expenses.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).map(e=>`<div class="expense"><div><b>${esc(e.name)}</b><div style="font-size:10px;color:var(--muted);margin-top:4px">${esc(e.date||'날짜 미정')} · ${esc(e.category)} · ${esc(e.by)} 결제</div></div><div style="text-align:right"><b>${money(e.amount)}</b><div><button class="mini" style="margin-top:5px" onclick="deleteExpense('${e.id}')">삭제</button></div></div></div>`).join(''):'<div class="empty">아직 지출 내역이 없어요.</div>';
+ updateMarkers();
+}
+function placeHTML(p){return `<div class="place"><div class="placeMain"><div class="placeName">${esc(p.name)} ${p.done?'✓':''}</div><div class="placeMeta">${esc(p.category)} · ${esc(p.by)} 저장 ${p.address?'· '+esc(p.address):''}</div>${p.note?`<div class="placeMeta">${esc(p.note)}</div>`:''}<div class="placeActions"><button class="mini" onclick="toggleLike('${p.id}')">♥ ${(p.likes||[]).length}</button><button class="mini" onclick="toggleDone('${p.id}')">${p.done?'방문 취소':'방문 완료'}</button><button class="mini" onclick="deletePlace('${p.id}')">삭제</button></div></div></div>`}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function updateMarkers(){if(!map||!window.google)return;markers.forEach(m=>m.setMap(null));markers=[];state.places.filter(p=>p.lat&&p.lng&&(activeFilter==='전체'||p.category===activeFilter)).forEach(p=>{let marker=new google.maps.Marker({map,position:{lat:Number(p.lat),lng:Number(p.lng)},title:p.name,label:{text:p.name.slice(0,1),color:'#fff'}});let iw=new google.maps.InfoWindow({content:`<b>${esc(p.name)}</b><br>${esc(p.category)} · ${esc(p.by)}`});marker.addListener('click',()=>iw.open(map,marker));markers.push(marker)})}
+window.searchPlace=()=>{let q=$('placeSearch').value.trim();if(!q)return toast('검색어를 입력해 주세요.');if(!searchService)return toast('Google Maps API 키를 먼저 설정해 주세요.');searchService.textSearch({query:q+' 경주'},(results,status)=>{if(status!=='OK'||!results?.length){$('searchResults').innerHTML='<div class="placeMeta">검색 결과가 없어요.</div>';return}$('searchResults').innerHTML=results.slice(0,5).map((r,i)=>`<button class="mini" style="display:block;width:100%;text-align:left;margin-top:5px" onclick="chooseSearch(${i})">${esc(r.name)} <span style="color:#8a938a">${esc(r.formatted_address||'')}</span></button>`).join('');window._searchResults=results})};
+window.chooseSearch=i=>{let r=window._searchResults[i],loc=r.geometry?.location;$('pName').value=r.name||'';$('pAddress').value=r.formatted_address||'';if(loc){$('pLat').value=loc.lat();$('pLng').value=loc.lng()}toast('장소 정보를 입력했어요. 저장을 눌러주세요.')};
+async function connectServices(){
+ if(settings.mapsKey){let s=document.createElement('script');s.src=`https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(settings.mapsKey)}&libraries=places&callback=initTripMap`;s.async=true;s.defer=true;s.onerror=()=>toast('Google Maps 키를 확인해 주세요.');document.head.appendChild(s)}
+ if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);let app=initializeApp(cfg,'gyeongju-'+Date.now());db=getFirestore(app);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[]};snap.forEach(d=>{let v=d.data();if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data)});state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
+}
+async function syncAll(){if(!db)return;let items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data}))];try{for(let item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),item)}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}}
+window.initTripMap=()=>{map=new google.maps.Map($('map'),{center:{lat:35.8562,lng:129.2247},zoom:13,mapTypeControl:false,streetViewControl:false,fullscreenControl:true,styles:[{featureType:'poi',stylers:[{visibility:'simplified'}]}]});searchService=new google.maps.places.PlacesService(map);$('map').style.background='white';updateMarkers()};
+render();
+if(settings.mapsKey||settings.firebaseConfig)connectServices();
+</script>
+</body>
+</html>
