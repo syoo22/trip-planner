@@ -174,7 +174,7 @@ function render(){
 }
 function placeHTML(p){return `<div class="place"><div class="placeMain"><div class="placeName">${esc(p.name)} ${p.done?'✓':''}</div><div class="placeMeta">${esc(p.category)} · ${esc(p.by)} 저장 ${p.address?'· '+esc(p.address):''}</div>${p.note?`<div class="placeMeta">${esc(p.note)}</div>`:''}<div class="placeActions"><button class="mini" onclick="toggleLike('${p.id}')">♥ ${(p.likes||[]).length}</button><button class="mini" onclick="toggleDone('${p.id}')">${p.done?'방문 취소':'방문 완료'}</button><button class="mini" onclick="deletePlace('${p.id}')">삭제</button><a class="mini" href="${naverMapUrl(p.name,p.address||'')}" target="_blank" rel="noopener noreferrer" style="text-decoration:none">네이버 지도 ↗</a></div></div></div>`}
 function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-function naverMapUrl(name,address=''){return 'https://map.naver.com/p/search/'+encodeURIComponent([name,address].filter(Boolean).join(' '))}
+function naverMapUrl(name,address=''){let query=(name||'').trim();if(!/경주/.test(query))query+=' 경주';return 'https://map.naver.com/p/search/'+encodeURIComponent(query)}
 function updateMarkers(){if(!map||!window.L)return;markers.forEach(m=>m.remove());markers=[];state.places.filter(p=>p.lat&&p.lng&&(activeFilter==='전체'||p.category===activeFilter)).forEach(p=>{let marker=L.marker([Number(p.lat),Number(p.lng)]).addTo(map).bindPopup(`<b>${esc(p.name)}</b><br>${esc(p.category)} · ${esc(p.by)}`);markers.push(marker)})}
 async function connectServices(){
  if(!map)initTripMap();
