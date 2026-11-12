@@ -67,6 +67,20 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .countdownMessage{font-size:10px;font-weight:650;letter-spacing:.02em}
 @media(max-width:650px){.tripCountdown{margin-top:10px;gap:3px}.countdownLabel{font-size:7px}.tripCountdown strong{font-size:26px}.countdownMessage{font-size:9px}}
 
+
+/* Simplified travel thumbnail and live countdown */
+.heroThumbnail{height:280px;min-height:0;margin:0;border-radius:24px;overflow:hidden;display:flex;align-items:center;justify-content:center;padding:24px;background:linear-gradient(180deg,rgba(12,25,17,.12),rgba(12,25,17,.32)),url('https://upload.wikimedia.org/wikipedia/commons/d/db/Leaning_trees_over_the_grassy_hillock_of_Nodong-ri_tombs_clouds_and_blue_sky_in_Gyeongju_South_Korea.jpg') center 48%/cover no-repeat}
+.heroThumbnail p{margin:0!important;color:#fff!important;text-align:center;font-size:clamp(16px,2.2vw,23px)!important;font-weight:750;letter-spacing:.02em;text-shadow:0 2px 10px #000b}
+.tripCountdownSection{display:flex;flex-direction:column;align-items:center;gap:12px;padding:22px 12px 8px;color:var(--ink);text-align:center}
+.tripCountdownSection .countdownLabel{color:var(--muted);font-size:10px;letter-spacing:.2em}
+.countdownUnits{display:flex;align-items:center;justify-content:center;gap:clamp(10px,3vw,28px);font-variant-numeric:tabular-nums}
+.countdownUnits div{display:flex;flex-direction:column;align-items:center;gap:4px;min-width:42px}
+.countdownUnits strong{font-family:Georgia,serif;font-size:clamp(30px,5vw,46px);font-weight:500;line-height:1;color:var(--green)}
+.countdownUnits span{font-size:9px;letter-spacing:.12em;color:var(--muted);font-weight:750}
+.countdownUnits>b{font-size:24px;font-weight:400;color:#aeb7ad;margin-top:-12px}
+.tripCountdownSection>p{margin:0;color:var(--muted);font-size:12px;font-weight:650}
+@media(max-width:650px){.heroThumbnail{height:190px;border-radius:18px;padding:18px}.heroThumbnail p{font-size:15px!important}.tripCountdownSection{padding-top:18px;gap:10px}.countdownUnits{gap:10px}.countdownUnits div{min-width:36px}.countdownUnits strong{font-size:31px}.countdownUnits span{font-size:8px}.countdownUnits>b{font-size:18px}}
+
 </style>
 </head>
 <body>
@@ -87,28 +101,21 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div class="topright"><span class="connection" id="connection"><i class="dot"></i>로그인 중</span><button class="logoutButton" onclick="logoutTrip()">로그아웃</button></div>
     <div class="presenceBar" id="presenceBar" aria-live="polite"><span class="presenceCount" id="presenceCount">접속 확인 중</span><div class="presencePeople" id="presencePeople"></div></div>
   </header>
-  <section class="hero heroCinematic">
-    <div class="cameraHud"><span class="cameraRec"><i></i> REC</span><span>GJ / TRAVEL FILM</span><span>HD&nbsp; 4K</span></div>
-    <div class="heroCenter">
-      <div class="eyebrow">A LITTLE GETAWAY WITH FOUR</div>
-      <h1>GYEONGJU</h1>
-      <p class="heroKorean">신라의 향기가 가득한 경주에서의 1박 2일</p>
-      <span class="heroDate">NOVEMBER 21 — 22, 2026</span>
-      <div class="tripCountdown" id="tripCountdown" aria-live="off">
-        <span class="countdownLabel">OUR TRIP BEGINS IN</span>
-        <strong id="countdownValue">D-09</strong>
-        <span class="countdownMessage" id="countdownMessage">우리의 경주 여행이 곧 시작돼요!</span>
-      </div>
+  <section class="heroThumbnail" aria-label="경주 여행 썸네일">
+    <p>신라의 향기가 가득한 경주에서의 1박 2일</p>
+  </section>
+  <section class="tripCountdownSection" aria-label="여행 카운트다운">
+    <span class="countdownLabel">OUR TRIP BEGINS IN</span>
+    <div class="countdownUnits">
+      <div><strong id="countdownDays">09</strong><span>DAYS</span></div>
+      <b>:</b>
+      <div><strong id="countdownHours">00</strong><span>HOURS</span></div>
+      <b>:</b>
+      <div><strong id="countdownMinutes">00</strong><span>MINUTES</span></div>
+      <b>:</b>
+      <div><strong id="countdownSeconds">00</strong><span>SECONDS</span></div>
     </div>
-    <div class="heroBottom">
-      <div class="heroStats">
-        <div class="stat"><strong id="statPeople">04</strong><span>TRAVELERS</span></div>
-        <div class="stat"><strong id="statPlaces">00</strong><span>SAVED PLACES</span></div>
-        <div class="stat"><strong id="statDone">00</strong><span>VISITED</span></div>
-      </div>
-      <span class="heroLocation">35° 50′ N&nbsp; 129° 12′ E<br>GYEONGJU, KOREA</span>
-    </div>
-    <span class="heroFrame frameTL"></span><span class="heroFrame frameTR"></span><span class="heroFrame frameBL"></span><span class="heroFrame frameBR"></span>
+    <p id="countdownMessage">우리의 경주 여행이 곧 시작돼요!</p>
   </section>
   <nav class="nav">
     <button class="active" data-tab="map">여행 지도</button>
@@ -342,21 +349,29 @@ function updateTripCountdown(){
  const start=new Date(2026,10,21,0,0,0);
  const end=new Date(2026,10,23,0,0,0);
  const now=new Date();
- const value=$('countdownValue'),label=$('countdownMessage');
+ const message=$('countdownMessage');
  if(now<start){
-  const days=Math.ceil((start-now)/86400000);
-  value.textContent='D-'+String(days).padStart(2,'0');
-  label.textContent=days===1?'내일이면 우리 경주 여행!':'우리의 경주 여행이 곧 시작돼요!';
+  let remaining=Math.max(0,Math.floor((start-now)/1000));
+  const days=Math.floor(remaining/86400);remaining%=86400;
+  const hours=Math.floor(remaining/3600);remaining%=3600;
+  const minutes=Math.floor(remaining/60);const seconds=remaining%60;
+  $('countdownDays').textContent=String(days).padStart(2,'0');
+  $('countdownHours').textContent=String(hours).padStart(2,'0');
+  $('countdownMinutes').textContent=String(minutes).padStart(2,'0');
+  $('countdownSeconds').textContent=String(seconds).padStart(2,'0');
+  message.textContent=days===0&&hours===0&&minutes===0?'곧 경주에서 만나요!':'우리의 경주 여행이 곧 시작돼요!';
  }else if(now<end){
-  value.textContent='D-DAY';
-  label.textContent='우리의 경주 여행이 시작됐어요!';
+  $('countdownDays').textContent='00';$('countdownHours').textContent='00';
+  $('countdownMinutes').textContent='00';$('countdownSeconds').textContent='00';
+  message.textContent='우리의 경주 여행이 시작됐어요!';
  }else{
-  value.textContent='TRIP END';
-  label.textContent='경주에서의 추억을 오래 간직해요.';
+  $('countdownDays').textContent='00';$('countdownHours').textContent='00';
+  $('countdownMinutes').textContent='00';$('countdownSeconds').textContent='00';
+  message.textContent='경주에서의 추억을 오래 간직해요.';
  }
 }
 updateTripCountdown();
-setInterval(updateTripCountdown,60000);
+setInterval(updateTripCountdown,1000);
 
 async function startFirebaseAuth(){
  try{
