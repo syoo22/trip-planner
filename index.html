@@ -49,6 +49,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   .logoutButton,.topright .pill{flex:0 0 auto;white-space:nowrap;padding:9px 12px;font-size:11px;line-height:1.2}
 }
 
+
+/* Shared live member presence */
+.presenceBar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:10px;padding:9px 12px;border:1px solid var(--line);border-radius:14px;background:#fff}
+.presenceCount{font-size:11px;font-weight:750;color:var(--green);white-space:nowrap}
+.presencePeople{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.presencePerson{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--muted);white-space:nowrap}
+.presencePerson i{width:7px;height:7px;border-radius:50%;background:#cbd1ca;display:inline-block}
+.presencePerson.online{color:var(--ink);font-weight:700}
+.presencePerson.online i{background:#4d986b;box-shadow:0 0 0 3px #4d986b20}
+@media(max-width:520px){.presenceBar{gap:7px;margin-top:8px;padding:8px 10px}.presencePeople{gap:8px}.presencePerson{font-size:10px}}
+
 </style>
 </head>
 <body>
@@ -67,6 +78,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   <header class="top">
     <div class="brand">GJ / TRAVEL CLUB</div>
     <div class="topright"><span class="connection" id="connection"><i class="dot"></i>로그인 중</span><button class="logoutButton" onclick="logoutTrip()">로그아웃</button><button class="pill" onclick="openSetup()">공유 설정</button></div>
+    <div class="presenceBar" id="presenceBar" aria-live="polite"><span class="presenceCount" id="presenceCount">접속 확인 중</span><div class="presencePeople" id="presencePeople"></div></div>
   </header>
   <section class="hero heroCinematic">
     <div class="cameraHud"><span class="cameraRec"><i></i> REC</span><span>GJ / TRAVEL FILM</span><span>HD&nbsp; 4K</span></div>
@@ -208,7 +220,7 @@ const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",au
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
 if(!settings.firebaseConfig){settings.firebaseConfig=JSON.stringify(defaultFirebaseConfig);localStorage.setItem(SETTINGS,JSON.stringify(settings));}
 let db=null, unsubscribe=null, map=null, markers=[], activeFilter='전체', selectedPlace=null, lastSearchAt=0, editingPlanId=null, supplyFilter='all', previousSupplySnapshot=null, localSupplyChanges=new Set();
-let firebaseApp=null, auth=null;
+let firebaseApp=null, auth=null, presenceTimer=null, currentPresenceUid=null, onlineMembers=[];
 const colors={'시연':'#557b62','민경':'#c17b58','다인':'#7886a5','윤진':'#b18a48'};
 const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
 function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
@@ -272,8 +284,43 @@ function naverMapUrl(name,address=''){let query=(name||'').trim();if(!/경주/.t
 window.focusPlace=id=>{let p=state.places.find(x=>x.id===id);if(!p||!p.lat||!p.lng){toast('이 장소의 지도 좌표가 없어요. 장소 정보를 수정해 주소를 다시 확인해 주세요.');return}if(!map){toast('지도를 불러오는 중이에요. 잠시 후 다시 눌러주세요.');return}map.flyTo([Number(p.lat),Number(p.lng)],17,{duration:0.8});let marker=markers.find(m=>Math.abs(m.getLatLng().lat-Number(p.lat))<0.00001&&Math.abs(m.getLatLng().lng-Number(p.lng))<0.00001);if(marker)setTimeout(()=>marker.openPopup(),350);else toast('지도에서 해당 위치로 이동했어요.')};
 function markerIcon(category){const styles={맛집:{symbol:'🍽️',fill:'#fff0e8',stroke:'#df875d'},카페:{symbol:'☕',fill:'#f5eee4',stroke:'#b88e60'},관광지:{symbol:'📷',fill:'#eaf1ff',stroke:'#7899d0'},숙소:{symbol:'🏠',fill:'#e9f3eb',stroke:'#78a887'},기타:{symbol:'📍',fill:'#f0f1ee',stroke:'#929d92'}};const s=styles[String(category||'').trim()]||styles.기타;const html='<svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46" style="overflow:visible;filter:drop-shadow(0 2px 3px #0004)"><path d="M23 2C11.5 2 3 10.2 3 21C3 33 23 44 23 44S43 33 43 21C43 10.2 34.5 2 23 2Z" fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="2.5"/><text x="23" y="22" text-anchor="middle" dominant-baseline="central" font-size="18" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">'+s.symbol+'</text></svg>';return L.divIcon({className:'',html,iconSize:[46,46],iconAnchor:[23,44],popupAnchor:[0,-41]})}
 function updateMarkers(){if(!map||!window.L)return;markers.forEach(m=>m.remove());markers=[];state.places.filter(p=>p.lat&&p.lng&&(activeFilter==='전체'||p.category===activeFilter)).forEach(p=>{let marker=L.marker([Number(p.lat),Number(p.lng)],{icon:markerIcon(p.category)}).addTo(map).bindPopup('<b>'+esc(p.name)+'</b><br>'+esc(p.category)+' · '+esc(p.by));markers.push(marker)})}
+
+const memberDirectory=[
+ {name:'시연',email:'siyeonoopp@gmail.com'},
+ {name:'민경',email:'lmkelly0604@gmail.com'},
+ {name:'다인',email:'ingukang0227@gmail.com'},
+ {name:'윤진',email:'choyunjin0302@gmail.com'}
+];
+function renderPresence(){
+ const now=Date.now(), fresh=onlineMembers.filter(p=>p.online&&now-Number(p.lastSeen||0)<90000);
+ $('presenceCount').textContent=fresh.length+'명 접속 중';
+ $('presencePeople').innerHTML=memberDirectory.map(m=>{
+  const p=onlineMembers.find(x=>x.uid&&x.email===m.email);
+  const isOnline=!!(p&&p.online&&now-Number(p.lastSeen||0)<90000);
+  return '<span class="presencePerson '+(isOnline?'online':'')+'"><i></i>'+m.name+'</span>';
+ }).join('');
+}
+async function updatePresence(online=true){
+ if(!db||!auth?.currentUser)return;
+ const user=auth.currentUser, member=memberDirectory.find(m=>m.email.toLowerCase()===String(user.email||'').toLowerCase());
+ if(!member)return;
+ currentPresenceUid=user.uid;
+ try{await setDoc(doc(db,'gyeongjuTrip','presence_'+user.uid),{kind:'presence',uid:user.uid,email:member.email,name:member.name,online,lastSeen:Date.now()})}
+ catch(e){console.error('Presence update failed',e)}
+}
+function startPresence(){
+ if(presenceTimer)clearInterval(presenceTimer);
+ updatePresence(true);
+ presenceTimer=setInterval(()=>{if(document.visibilityState==='visible')updatePresence(true)},30000);
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')updatePresence(true)});
+}
+async function stopPresence(){
+ if(presenceTimer){clearInterval(presenceTimer);presenceTimer=null}
+ if(db&&auth?.currentUser)await updatePresence(false);
+}
+
 async function connectServices(){
- if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);if(!firebaseApp){firebaseApp=initializeApp(cfg);auth=getAuth(firebaseApp)}db=getFirestore(firebaseApp);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};snap.forEach(d=>{let v=d.data();if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});if(previousSupplySnapshot){next.supplies.forEach(item=>{let before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
+ if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);if(!firebaseApp){firebaseApp=initializeApp(cfg);auth=getAuth(firebaseApp)}db=getFirestore(firebaseApp);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};let presenceDocs=[];snap.forEach(d=>{let v=d.data();if(v.kind==='presence'){presenceDocs.push(v);return}if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});onlineMembers=presenceDocs;renderPresence();if(previousSupplySnapshot){next.supplies.forEach(item=>{let before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
 }
 async function syncAll(){if(!db)return;let items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];try{for(let item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),item)}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}}
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
@@ -288,7 +335,10 @@ async function startFirebaseAuth(){
     $('tripGate').style.display='none';
     document.querySelector('.app').style.display='block';
     await connectServices();
+    startPresence();
    }else{
+    await stopPresence();
+    onlineMembers=onlineMembers.filter(p=>p.uid!==currentPresenceUid);renderPresence();
     if(unsubscribe){unsubscribe();unsubscribe=null}
     db=null;
     document.querySelector('.app').style.display='none';
@@ -322,7 +372,7 @@ $('loginForm').addEventListener('submit',async event=>{
 });
 window.logoutTrip=async()=>{
  if(!auth)return;
- try{await signOut(auth)}catch(err){console.error(err);toast('로그아웃에 실패했어요. 다시 시도해 주세요.')}
+ try{await stopPresence();await signOut(auth)}catch(err){console.error(err);toast('로그아웃에 실패했어요. 다시 시도해 주세요.')}
 };
 startFirebaseAuth();
 </script>
