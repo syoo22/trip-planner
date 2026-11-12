@@ -60,6 +60,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .presencePerson.online i{background:#4d986b;box-shadow:0 0 0 3px #4d986b20}
 @media(max-width:520px){.presenceBar{gap:7px;margin-top:8px;padding:8px 10px}.presencePeople{gap:8px}.presencePerson{font-size:10px}}
 
+
+.tripCountdown{display:flex;flex-direction:column;align-items:center;gap:4px;margin:15px auto 0;color:#fff;text-shadow:0 2px 9px #0009}
+.countdownLabel{font-size:8px;letter-spacing:.2em;font-weight:800;opacity:.9}
+.tripCountdown strong{font-family:Georgia,serif;font-size:clamp(25px,4vw,34px);line-height:1.05;letter-spacing:.04em}
+.countdownMessage{font-size:10px;font-weight:650;letter-spacing:.02em}
+@media(max-width:650px){.tripCountdown{margin-top:10px;gap:3px}.countdownLabel{font-size:7px}.tripCountdown strong{font-size:26px}.countdownMessage{font-size:9px}}
+
 </style>
 </head>
 <body>
@@ -87,6 +94,11 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
       <h1>GYEONGJU</h1>
       <p class="heroKorean">신라의 향기가 가득한 경주에서의 1박 2일</p>
       <span class="heroDate">NOVEMBER 21 — 22, 2026</span>
+      <div class="tripCountdown" id="tripCountdown" aria-live="off">
+        <span class="countdownLabel">OUR TRIP BEGINS IN</span>
+        <strong id="countdownValue">D-09</strong>
+        <span class="countdownMessage" id="countdownMessage">우리의 경주 여행이 곧 시작돼요!</span>
+      </div>
     </div>
     <div class="heroBottom">
       <div class="heroStats">
@@ -325,6 +337,27 @@ async function connectServices(){
 async function syncAll(){if(!db)return;let items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];try{for(let item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),item)}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}}
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
 render();
+
+function updateTripCountdown(){
+ const start=new Date(2026,10,21,0,0,0);
+ const end=new Date(2026,10,23,0,0,0);
+ const now=new Date();
+ const value=$('countdownValue'),label=$('countdownMessage');
+ if(now<start){
+  const days=Math.ceil((start-now)/86400000);
+  value.textContent='D-'+String(days).padStart(2,'0');
+  label.textContent=days===1?'내일이면 우리 경주 여행!':'우리의 경주 여행이 곧 시작돼요!';
+ }else if(now<end){
+  value.textContent='D-DAY';
+  label.textContent='우리의 경주 여행이 시작됐어요!';
+ }else{
+  value.textContent='TRIP END';
+  label.textContent='경주에서의 추억을 오래 간직해요.';
+ }
+}
+updateTripCountdown();
+setInterval(updateTripCountdown,60000);
+
 async function startFirebaseAuth(){
  try{
   const cfg=JSON.parse(settings.firebaseConfig||'{}');
