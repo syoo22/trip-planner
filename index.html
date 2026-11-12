@@ -412,7 +412,18 @@ $('loginForm').addEventListener('submit',async event=>{
   await signInWithEmailAndPassword(auth,email,password);
  }catch(err){
   console.error(err);
-  $('tripGateError').textContent=err.code==='auth/invalid-credential'||err.code==='auth/wrong-password'||err.code==='auth/user-not-found'?'이메일 또는 비밀번호를 확인해 주세요.':'로그인에 실패했어요. 입력 정보를 확인해 주세요.';
+  const code=err.code||'unknown';
+  const messages={
+   'auth/invalid-credential':'이메일 또는 비밀번호를 확인해 주세요.',
+   'auth/wrong-password':'이메일 또는 비밀번호를 확인해 주세요.',
+   'auth/user-not-found':'등록되지 않은 이메일이에요. 관리자에게 계정 등록을 요청해 주세요.',
+   'auth/too-many-requests':'로그인 시도가 너무 많아요. 잠시 후 다시 시도해 주세요.',
+   'auth/network-request-failed':'네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
+   'auth/operation-not-allowed':'로그인 방식이 비활성화되어 있어요. 관리자 확인이 필요해요.',
+   'auth/invalid-api-key':'Firebase 설정 오류예요. 관리자 확인이 필요해요.',
+   'auth/app-not-authorized':'현재 웹사이트 도메인이 Firebase에서 허용되지 않았어요. 관리자 확인이 필요해요.'
+  };
+  $('tripGateError').textContent=(messages[code]||'로그인에 실패했어요. 오류 코드: '+code);
  }finally{
   button.disabled=false;
   button.textContent='여행 페이지 입장하기';
