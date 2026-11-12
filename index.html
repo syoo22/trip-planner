@@ -31,46 +31,32 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .tripGateEyebrow{font-size:10px;letter-spacing:.2em;font-weight:800;color:var(--green)}
 .tripGateCard h2{font:500 32px Georgia,serif;margin:12px 0 8px;color:#263e32}
 .tripGateCard p{font-size:12px;line-height:1.7;color:var(--muted);margin:0 0 20px}
-.tripGateInput{width:100%;height:52px;border:1px solid var(--line);border-radius:12px;text-align:center;font-size:22px;letter-spacing:.35em;font-weight:700;outline:none}
+.tripGateInput{display:block;width:100%;height:48px;margin-top:10px;padding:0 14px;border:1px solid var(--line);border-radius:12px;text-align:left;font-size:14px;letter-spacing:0;font-weight:500;outline:none}
 .tripGateInput:focus{border-color:var(--green);box-shadow:0 0 0 3px #365c4918}
-.tripGateButton{width:100%;margin-top:12px;height:48px;border-radius:12px;background:var(--green);color:#fff;font-size:13px;font-weight:700}
+.tripGateButton{width:100%;margin-top:14px;height:48px;border-radius:12px;background:var(--green);color:#fff;font-size:13px;font-weight:700}
 .tripGateError{min-height:18px;margin-top:10px!important;color:#b34d43!important;font-size:11px!important}
+.app{display:none}
+.logoutButton{border:1px solid var(--line);background:#fff;border-radius:999px;padding:9px 13px;font-size:12px;color:var(--muted)}
+@media(max-width:420px){.tripGateCard{padding:28px 21px}.tripGateCard h2{font-size:30px}}
 
 </style>
 </head>
 <body>
 <div class="tripGate" id="tripGate">
-  <form class="tripGateCard" onsubmit="unlockTrip(event)">
+  <form class="tripGateCard" id="loginForm">
     <div class="tripGateEyebrow">GJ / TRAVEL CLUB</div>
     <h2>GYEONGJU</h2>
-    <p>우리 넷의 경주 여행 기록이에요.<br>함께 정한 공유 코드를 입력해 주세요.</p>
-    <input class="tripGateInput" id="tripGateCode" type="password" inputmode="numeric" maxlength="4" placeholder="••••" aria-label="여행 공유 코드" autocomplete="off" required>
-    <button class="tripGateButton" type="submit">여행 페이지 입장하기</button>
+    <p>우리 넷의 경주 여행 기록이에요.<br>이메일과 비밀번호로 로그인해 주세요.</p>
+    <input class="tripGateInput" id="loginEmail" type="email" placeholder="이메일 주소" aria-label="이메일 주소" autocomplete="username" required>
+    <input class="tripGateInput" id="loginPassword" type="password" placeholder="비밀번호" aria-label="비밀번호" autocomplete="current-password" required>
+    <button class="tripGateButton" id="loginButton" type="submit">여행 페이지 입장하기</button>
     <p class="tripGateError" id="tripGateError" aria-live="polite"></p>
   </form>
 </div>
-<script>
-(function(){
-  if(sessionStorage.getItem('gyeongju-trip-unlocked')==='yes'){
-    document.getElementById('tripGate').style.display='none';
-  }
-  window.unlockTrip=function(event){
-    event.preventDefault();
-    var input=document.getElementById('tripGateCode');
-    if(input.value==='4012'){
-      sessionStorage.setItem('gyeongju-trip-unlocked','yes');
-      document.getElementById('tripGate').style.display='none';
-    }else{
-      document.getElementById('tripGateError').textContent='공유 코드가 맞지 않아요. 다시 확인해 주세요.';
-      input.value='';input.focus();
-    }
-  };
-})();
-</script>
 <div class="app">
   <header class="top">
     <div class="brand">GJ / TRAVEL CLUB</div>
-    <div class="topright"><span class="connection" id="connection"><i class="dot"></i>로컬 모드</span><button class="pill" onclick="openSetup()">공유 설정</button></div>
+    <div class="topright"><span class="connection" id="connection"><i class="dot"></i>로그인 중</span><button class="logoutButton" onclick="logoutTrip()">로그아웃</button><button class="pill" onclick="openSetup()">공유 설정</button></div>
   </header>
   <section class="hero heroCinematic">
     <div class="cameraHud"><span class="cameraRec"><i></i> REC</span><span>GJ / TRAVEL FILM</span><span>HD&nbsp; 4K</span></div>
@@ -201,6 +187,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const $=id=>document.getElementById(id);
@@ -211,6 +198,7 @@ const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",au
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
 if(!settings.firebaseConfig){settings.firebaseConfig=JSON.stringify(defaultFirebaseConfig);localStorage.setItem(SETTINGS,JSON.stringify(settings));}
 let db=null, unsubscribe=null, map=null, markers=[], activeFilter='전체', selectedPlace=null, lastSearchAt=0, editingPlanId=null, supplyFilter='all', previousSupplySnapshot=null, localSupplyChanges=new Set();
+let firebaseApp=null, auth=null;
 const colors={'시연':'#557b62','민경':'#c17b58','다인':'#7886a5','윤진':'#b18a48'};
 const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
 function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
@@ -275,12 +263,58 @@ window.focusPlace=id=>{let p=state.places.find(x=>x.id===id);if(!p||!p.lat||!p.l
 function markerIcon(category){const styles={맛집:{symbol:'🍽️',fill:'#fff0e8',stroke:'#df875d'},카페:{symbol:'☕',fill:'#f5eee4',stroke:'#b88e60'},관광지:{symbol:'📷',fill:'#eaf1ff',stroke:'#7899d0'},숙소:{symbol:'🏠',fill:'#e9f3eb',stroke:'#78a887'},기타:{symbol:'📍',fill:'#f0f1ee',stroke:'#929d92'}};const s=styles[String(category||'').trim()]||styles.기타;const html='<svg xmlns="http://www.w3.org/2000/svg" width="46" height="46" viewBox="0 0 46 46" style="overflow:visible;filter:drop-shadow(0 2px 3px #0004)"><path d="M23 2C11.5 2 3 10.2 3 21C3 33 23 44 23 44S43 33 43 21C43 10.2 34.5 2 23 2Z" fill="'+s.fill+'" stroke="'+s.stroke+'" stroke-width="2.5"/><text x="23" y="22" text-anchor="middle" dominant-baseline="central" font-size="18" font-family="Apple Color Emoji,Segoe UI Emoji,Noto Color Emoji,sans-serif">'+s.symbol+'</text></svg>';return L.divIcon({className:'',html,iconSize:[46,46],iconAnchor:[23,44],popupAnchor:[0,-41]})}
 function updateMarkers(){if(!map||!window.L)return;markers.forEach(m=>m.remove());markers=[];state.places.filter(p=>p.lat&&p.lng&&(activeFilter==='전체'||p.category===activeFilter)).forEach(p=>{let marker=L.marker([Number(p.lat),Number(p.lng)],{icon:markerIcon(p.category)}).addTo(map).bindPopup('<b>'+esc(p.name)+'</b><br>'+esc(p.category)+' · '+esc(p.by));markers.push(marker)})}
 async function connectServices(){
- if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);let app=initializeApp(cfg,'gyeongju-'+Date.now());db=getFirestore(app);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};snap.forEach(d=>{let v=d.data();if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});if(previousSupplySnapshot){next.supplies.forEach(item=>{let before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
+ if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);if(!firebaseApp){firebaseApp=initializeApp(cfg);auth=getAuth(firebaseApp)}db=getFirestore(firebaseApp);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};snap.forEach(d=>{let v=d.data();if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});if(previousSupplySnapshot){next.supplies.forEach(item=>{let before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
 }
 async function syncAll(){if(!db)return;let items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];try{for(let item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),item)}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}}
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
 render();
-if(settings.firebaseConfig)connectServices();
+async function startFirebaseAuth(){
+ try{
+  const cfg=JSON.parse(settings.firebaseConfig||'{}');
+  firebaseApp=initializeApp(cfg);
+  auth=getAuth(firebaseApp);
+  onAuthStateChanged(auth,async user=>{
+   if(user){
+    $('tripGate').style.display='none';
+    document.querySelector('.app').style.display='block';
+    await connectServices();
+   }else{
+    if(unsubscribe){unsubscribe();unsubscribe=null}
+    db=null;
+    document.querySelector('.app').style.display='none';
+    $('tripGate').style.display='flex';
+    $('connection').innerHTML='<i class="dot"></i>로그아웃 상태';
+   }
+  });
+ }catch(err){
+  console.error(err);
+  $('tripGateError').textContent='로그인 서비스를 연결하지 못했어요. 잠시 후 다시 시도해 주세요.';
+ }
+}
+$('loginForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const email=$('loginEmail').value.trim();
+ const password=$('loginPassword').value;
+ const button=$('loginButton');
+ $('tripGateError').textContent='';
+ button.disabled=true;
+ button.textContent='로그인 중...';
+ try{
+  if(!auth)throw new Error('인증 서비스가 준비되지 않았어요.');
+  await signInWithEmailAndPassword(auth,email,password);
+ }catch(err){
+  console.error(err);
+  $('tripGateError').textContent=err.code==='auth/invalid-credential'||err.code==='auth/wrong-password'||err.code==='auth/user-not-found'?'이메일 또는 비밀번호를 확인해 주세요.':'로그인에 실패했어요. 입력 정보를 확인해 주세요.';
+ }finally{
+  button.disabled=false;
+  button.textContent='여행 페이지 입장하기';
+ }
+});
+window.logoutTrip=async()=>{
+ if(!auth)return;
+ try{await signOut(auth)}catch(err){console.error(err);toast('로그아웃에 실패했어요. 다시 시도해 주세요.')}
+};
+startFirebaseAuth();
 </script>
 </body>
 </html>
