@@ -233,7 +233,7 @@ import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "ht
 
 const $=id=>document.getElementById(id);
 const STORE='gyeongju-trip-v1', SETTINGS='gyeongju-settings-v1';
-let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[],undefined');
+let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[],"wishlist":[],"supplies":[]}');
 state.wishlist=state.wishlist||[];state.supplies=state.supplies||[];
 const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",authDomain:"trip-planner-9d568.firebaseapp.com",projectId:"trip-planner-9d568",storageBucket:"trip-planner-9d568.firebasestorage.app",messagingSenderId:"843026205449",appId:"1:843026205449:web:938f3dbc7bcde76c9061d8"};
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
