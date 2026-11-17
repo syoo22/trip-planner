@@ -393,7 +393,7 @@ function renderTripDashboard(){
 }
 let currentView='dashboard';
 window.showDashboard=()=>{currentView='dashboard';document.querySelector('.app').classList.add('dashboardMode');document.querySelector('.app').classList.remove('detailMode');renderTripDashboard()};
-window.showWorkspace=()=>{currentView='detail';document.querySelector('.app').classList.remove('dashboardMode');document.querySelector('.app').classList.add('detailMode');const t=trips.find(x=>x.id===activeTripId)||{};$('activeTripTitle').textContent=t.name||'여행 기록';$('activeTripDates').textContent=formatTripDate(t.startDate,t.endDate);if(t.cover)document.querySelector('.heroThumbnail').style.backgroundImage='linear-gradient(180deg,rgba(12,25,17,.12),rgba(12,25,17,.32)),url("'+t.cover+'")';document.querySelector('.heroThumbnail p').textContent=(t.name||'우리의 여행')+' 기록을 함께 만들어요.';const mapLink=document.querySelector('.sharedMapOpen');if(mapLink){mapLink.href=t.mapUrl||'https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행');mapLink.textContent=t.mapUrl?'공동 지도 열기 ↗':'지도 검색하기 ↗'}const mapTitle=document.querySelector('.sharedMapBottom strong');if(mapTitle)mapTitle.textContent=t.name||'우리의 여행';const mapHeading=document.querySelector('#panel-map .sectionHead h2');if(mapHeading)mapHeading.textContent=(t.name||'우리의 여행')+' 지도';const navLink=document.querySelector('.naverMapOpen');if(navLink)navLink.href='https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행')};
+window.showWorkspace=()=>{currentView='detail';document.querySelector('.app').classList.remove('dashboardMode');document.querySelector('.app').classList.add('detailMode');const t=trips.find(x=>x.id===activeTripId)||{};$('activeTripTitle').textContent=t.name||'여행 기록';$('activeTripDates').textContent=formatTripDate(t.startDate,t.endDate);document.querySelector('.heroThumbnail').style.backgroundImage='linear-gradient(180deg,rgba(12,25,17,.12),rgba(12,25,17,.32)),url("'+(t.cover||'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85')+'")';const town=document.querySelector('.mapTown');if(town)town.textContent=String(t.location||t.name||'TRAVEL').toUpperCase();document.querySelector('.heroThumbnail p').textContent=(t.name||'우리의 여행')+' 기록을 함께 만들어요.';const mapLink=document.querySelector('.sharedMapOpen');if(mapLink){mapLink.href=t.mapUrl||'https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행');mapLink.textContent=t.mapUrl?'공동 지도 열기 ↗':'지도 검색하기 ↗'}const mapTitle=document.querySelector('.sharedMapBottom strong');if(mapTitle)mapTitle.textContent=t.name||'우리의 여행';const mapHeading=document.querySelector('#panel-map .sectionHead h2');if(mapHeading)mapHeading.textContent=(t.name||'우리의 여행')+' 지도';const navLink=document.querySelector('.naverMapOpen');if(navLink)navLink.href='https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행')};
 window.selectTrip=id=>{activeTripId=id;localStorage.setItem('active-trip-id',id);previousSupplySnapshot=null;currentView='detail';if(latestTripSnapshot)applyTripSnapshot(latestTripSnapshot);else showWorkspace()};
 window.openAddTrip=()=>{$('newTripName').value='';$('newTripStart').value='';$('newTripEnd').value='';$('newTripCover').value='';$('newTripMap').value='';$('addTripModal').classList.add('show')};
 window.createTrip=async()=>{
@@ -419,15 +419,15 @@ function updateTripCountdown(){
   $('countdownHours').textContent=String(hours).padStart(2,'0');
   $('countdownMinutes').textContent=String(minutes).padStart(2,'0');
   $('countdownSeconds').textContent=String(seconds).padStart(2,'0');
-  message.textContent=days===0&&hours===0&&minutes===0?'곧 경주에서 만나요!':'우리의 경주 여행이 곧 시작돼요!';
+  message.textContent=days===0&&hours===0&&minutes===0?'곧 '+(trip.name||'여행')+'에서 만나요!':(trip.name||'우리의 여행')+'이 곧 시작돼요!';
  }else if(now<end){
   $('countdownDays').textContent='00';$('countdownHours').textContent='00';
   $('countdownMinutes').textContent='00';$('countdownSeconds').textContent='00';
-  message.textContent='우리의 경주 여행이 시작됐어요!';
+  message.textContent=(trip.name||'우리의 여행')+'이 시작됐어요!';
  }else{
   $('countdownDays').textContent='00';$('countdownHours').textContent='00';
   $('countdownMinutes').textContent='00';$('countdownSeconds').textContent='00';
-  message.textContent='경주에서의 추억을 오래 간직해요.';
+  message.textContent=(trip.name||'여행')+'에서의 추억을 오래 간직해요.';
  }
 }
 updateTripCountdown();
