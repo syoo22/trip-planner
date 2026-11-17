@@ -442,7 +442,21 @@ window.saveExpense=()=>{let name=$('eName').value.trim(),amount=Number($('eAmoun
 
 window.addSupply=()=>{let name=$('supplyName').value.trim();if(!name)return toast('준비물 이름을 입력해 주세요.');state.supplies.push({id:crypto.randomUUID(),name:name,category:$('supplyCategory').value,by:$('supplyBy').value,done:false,createdAt:Date.now()});$('supplyName').value='';persist();toast('준비물을 추가했어요.')};
 window.toggleSupply=id=>{let p=state.supplies.find(x=>x.id===id);if(!p)return;p.done=!p.done;if(p.done){p.completedBy=$('supplyActor').value;p.completedAt=Date.now();localSupplyChanges.add(id);toast(p.completedBy+'님이 '+p.name+' 준비를 완료했어요.')}else{p.completedBy='';p.completedAt=null;localSupplyChanges.add(id);toast('완료 체크를 취소했어요.')}persist()};
-window.deleteSupply=id=>{if(!confirm('이 준비물을 삭제할까요?'))return;state.supplies=state.supplies.filter(x=>x.id!==id);persist()};
+window.deleteSupply=async id=>{
+ if(!confirm('이 준비물을 삭제할까요?'))return;
+ const item=state.supplies.find(x=>x.id===id);if(!item)return;
+ if(!db)return toast('실시간 공유 연결 후 다시 시도해 주세요.');
+ try{
+  await setDoc(doc(db,'gyeongjuTrip','supplyDeleted_'+id),{kind:'supplyDeleted',id:'supplyDeleted_'+id,supplyId:id,tripId:activeTripId,deletedAt:Date.now()});
+  await deleteDoc(doc(db,'gyeongjuTrip',id));
+  state.supplies=state.supplies.filter(x=>x.id!==id);
+  localStorage.setItem(STORE,JSON.stringify(state));
+  render();toast('준비물을 삭제했어요.');
+ }catch(error){
+  console.error('Supply delete failed:',error);
+  toast('준비물을 삭제하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.');
+ }
+};
 window.renderSupplies=()=>{let total=state.supplies.length,done=state.supplies.filter(x=>x.done).length,pct=total?Math.round(done/total*100):0;$('supplyProgressText').textContent=done+' / '+total+'개';$('supplyProgressPct').textContent=pct+'%';$('supplyProgressBar').style.width=pct+'%';let list=state.supplies.filter(x=>supplyFilter==='all'||(supplyFilter==='done'?x.done:!x.done)).slice().sort((a,b)=>Number(a.done)-Number(b.done)||a.createdAt-b.createdAt);$('supplyList').innerHTML=list.map(x=>{let row=document.createElement('div');row.className='supplyItem '+(x.done?'isDone':'');let label=document.createElement('label');label.className='supplyCheck';let check=document.createElement('input');check.type='checkbox';check.checked=!!x.done;check.onchange=()=>toggleSupply(x.id);let custom=document.createElement('span');custom.className='supplyCustomCheck';label.append(check,custom);let info=document.createElement('div');info.className='supplyItemInfo';let title=document.createElement('strong');title.textContent=x.name;let meta=document.createElement('small');meta.textContent=x.category+' · '+(x.by==='공동'?'함께 준비':x.by+' 담당')+(x.done&&x.completedBy?' · '+x.completedBy+' 완료':'');info.append(title,meta);let del=document.createElement('button');del.className='supplyDelete';del.textContent='삭제';del.onclick=()=>deleteSupply(x.id);row.append(label,info,del);return row.outerHTML}).join('')||'<div class="card empty">아직 준비물이 없어요. 필요한 물건을 하나씩 추가해 보세요.</div>';let activity=state.supplies.filter(x=>x.done&&x.completedAt).sort((a,b)=>b.completedAt-a.completedAt).slice(0,6);$('supplyActivityList').innerHTML=activity.map(x=>'<div class="supplyActivityItem"><span class="supplyActivityIcon">✓</span><div><strong>'+esc(x.completedBy||x.by||'친구')+'</strong>님이 <b>'+esc(x.name)+'</b> 준비를 완료했어요.<small>'+new Date(x.completedAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'</small></div></div>').join('')||'<div class="supplyActivityEmpty">아직 완료된 준비물이 없어요.</div>'};
 window.setSupplyFilter=f=>{supplyFilter=f;document.querySelectorAll('.supplyFilter').forEach(b=>b.classList.toggle('active',b.dataset.supplyFilter===f));renderSupplies()};
 document.querySelectorAll('.supplyFilter').forEach(b=>b.addEventListener('click',()=>setSupplyFilter(b.dataset.supplyFilter)));
@@ -536,18 +550,18 @@ async function connectServices(){
 }
 function applyTripSnapshot(snap){
  const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[]};
- const deletedAlbumIds=new Set();
- snap.forEach(d=>{const v=d.data();if(v.kind==='albumPhotoDeleted'&&(v.tripId||DEFAULT_TRIP_ID)===activeTripId)deletedAlbumIds.add(v.photoId||v.id)});
- snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data)});
+ const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
+ snap.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted'||v.kind==='supplyDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply'&&!deletedSupplyIds.has(v.id))next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data)});
  if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
  localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
  state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
 }
 async function syncAll(){
  if(!db)return;
- const deletedAlbumIds=new Set();
- if(latestTripSnapshot)latestTripSnapshot.forEach(d=>{const v=d.data();if(v.kind==='albumPhotoDeleted'&&(v.tripId||DEFAULT_TRIP_ID)===activeTripId)deletedAlbumIds.add(v.photoId||v.id)});
- const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data}))];
+ const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
+ if(latestTripSnapshot)latestTripSnapshot.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.filter(data=>!deletedSupplyIds.has(data.id)).map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data}))];
  try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
 }
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
