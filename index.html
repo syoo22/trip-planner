@@ -790,7 +790,7 @@ async function syncAll(){
 }
 
 let editingRouletteId=null,selectedRouletteId=null,rouletteSpinTimer=null;
-function addRouletteOptionField(value=''){const row=document.createElement('div');row.className='rouletteOptionRow';const input=document.createElement('input');input.maxLength=40;input.placeholder='룰렛 항목 입력';input.value=value;input.className='rouletteOptionInput';const del=document.createElement('button');del.type='button';del.textContent='삭제';del.onclick=()=>row.remove();row.append(input,del);$('rouletteOptionEditor').append(row)}
+window.addRouletteOptionField=function(value=''){const row=document.createElement('div');row.className='rouletteOptionRow';const input=document.createElement('input');input.maxLength=40;input.placeholder='룰렛 항목 입력';input.value=value;input.className='rouletteOptionInput';const del=document.createElement('button');del.type='button';del.textContent='삭제';del.onclick=()=>row.remove();row.append(input,del);$('rouletteOptionEditor').append(row)}
 function resetRouletteForm(){editingRouletteId=null;$('rouletteName').value='';$('rouletteOptionEditor').innerHTML='';addRouletteOptionField();addRouletteOptionField();$('rouletteFormTitle').textContent='새 룰렛 만들기';$('rouletteSaveButton').textContent='룰렛 저장';$('rouletteCancelButton').hidden=true}
 window.cancelRouletteEdit=()=>resetRouletteForm();
 window.editRoulette=id=>{const item=state.roulettes.find(x=>x.id===id);if(!item)return;editingRouletteId=id;$('rouletteName').value=item.name;$('rouletteOptionEditor').innerHTML='';item.options.forEach(x=>addRouletteOptionField(x));$('rouletteFormTitle').textContent='룰렛 수정하기';$('rouletteSaveButton').textContent='수정 저장';$('rouletteCancelButton').hidden=false;$('rouletteName').scrollIntoView({behavior:'smooth',block:'center'})};
