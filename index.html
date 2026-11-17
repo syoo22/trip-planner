@@ -89,6 +89,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .dashboardHero{padding:36px 34px 28px}.dashboardHero h1{margin:30px 0 10px}.dashboardStats{margin-top:26px;max-width:340px}.dashboardStats>div{padding:16px 20px;border-radius:18px}.dashboardStats strong{font-size:22px;margin-top:5px}.dashboardHero>small{margin-top:14px}@media(max-width:650px){.dashboardHero{padding:26px 22px 22px}.dashboardHero h1{margin:24px 0 9px}.dashboardStats{margin-top:21px;max-width:100%}.dashboardStats>div{padding:14px 16px}.dashboardStats strong{font-size:20px}.dashboardHero>small{margin-top:12px}}
 .dashboardHero{padding:28px 30px 22px}.dashboardHero h1{font-size:clamp(30px,4.8vw,48px);margin:22px 0 8px}.dashboardHero>p{font-size:clamp(13px,1.8vw,18px)}.dashboardStats{margin-top:20px;max-width:270px}.dashboardStats>div{padding:12px 16px;border-radius:16px}.dashboardStats span{font-size:12px}.dashboardStats strong{font-size:19px;margin-top:3px}.dashboardHero>small{font-size:11px;margin-top:10px}@media(max-width:650px){.dashboardHero{padding:23px 19px 18px}.dashboardHero h1{font-size:34px;margin:18px 0 7px}.dashboardHero>p{font-size:13px}.dashboardStats{margin-top:17px;max-width:230px}.dashboardStats>div{padding:10px 14px;border-radius:14px}.dashboardStats span{font-size:11px}.dashboardStats strong{font-size:18px}.dashboardHero>small{font-size:10px;margin-top:9px}}
 .tripArchiveCard{position:relative}.tripArchiveTools{position:absolute;z-index:2;top:12px;right:12px;display:flex;gap:7px}.tripArchiveTools button{background:#ffffffed;color:#365c49;border:1px solid #e8ebe5;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:750;box-shadow:0 3px 12px #17251b12}.tripArchiveTools button.delete{color:#a44c3d}
+.tripCreateModal,.tripCreateModal *{box-sizing:border-box}.tripCreateFields,.tripCreateFields .field{min-width:0;width:100%}.tripCreateFields .field input:not([type=file]){display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}.tripCreateFields .field input[type=date]{appearance:none;-webkit-appearance:none;text-align:left;padding-left:18px;padding-right:12px;font-size:16px;min-width:0;max-width:100%;overflow:hidden}.tripCreateFields .field input[type=date]::-webkit-date-and-time-value{text-align:left}.tripCreateFields .field input[type=date]::-webkit-calendar-picker-indicator{margin-left:4px;flex:0 0 auto}@media(max-width:650px){.tripCreateFields .field input[type=date]{font-size:15px;padding-left:14px;padding-right:8px}}
 </style>
 </head>
 <body>
@@ -207,8 +208,8 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   <div class="modalTop"><h3>새 여행</h3><button class="close" onclick="closeModal('addTripModal')" aria-label="닫기">×</button></div>
   <div class="tripCreateFields">
     <div class="field"><label for="newTripName">여행지</label><input id="newTripName" placeholder="예: 부산"></div>
-    <div class="field"><label for="newTripStart">시작</label><input id="newTripStart" type="date"></div>
-    <div class="field"><label for="newTripEnd">끝</label><input id="newTripEnd" type="date"></div>
+    <div class="field"><label for="newTripStart">출발일</label><input id="newTripStart" type="date"></div>
+    <div class="field"><label for="newTripEnd">도착일</label><input id="newTripEnd" type="date"></div>
     <div class="field"><label>표지 사진</label>
       <div class="tripCoverPicker" id="tripCoverPicker">
         <input id="newTripCoverFile" type="file" accept="image/*" hidden>
