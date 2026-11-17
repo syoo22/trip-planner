@@ -153,27 +153,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <p id="countdownMessage">우리의 경주 여행이 곧 시작돼요!</p>
   </section>
   <nav class="nav">
-    <button class="active" data-tab="map">여행 지도</button>
-    <button data-tab="wishlist">가고 싶어요</button>
+    <button class="active" data-tab="wishlist">가고 싶어요</button>
     <button data-tab="schedule">여행 일정</button>
     <button data-tab="expenses">여행 경비</button><button data-tab="supplies">여행 준비물</button>
     <button data-tab="album">여행 앨범</button>
   </nav>
 
-  <section class="panel active" id="panel-map">
-    <div class="sectionHead"><div><h2>우리의 경주 지도</h2><p>친구들과 함께 저장한 경주 여행 장소를 확인해요.</p></div></div>
-    <div class="mapLayout mapLayoutSingle">
-      <div class="mapBox sharedMapBox" id="map">
-        <div class="sharedMapCard">
-          <div class="sharedMapTop"><span class="googleMapMark"><span>G</span> Google Maps</span><span class="sharedMapBadge">공동 편집 지도</span></div>
-          <div class="sharedMapVisual" aria-hidden="true"><span class="mapRoad roadOne"></span><span class="mapRoad roadTwo"></span><span class="mapRoad roadThree"></span><span class="mapPark parkOne"></span><span class="mapPark parkTwo"></span><span class="mapPin pinOne">🍡</span><span class="mapPin pinTwo">☕</span><span class="mapPin pinThree">🍽️</span><span class="mapPin pinFour">📍</span><span class="mapTown">GYEONGJU</span></div>
-          <div class="sharedMapBottom"><div><strong>경주 여행순🍡</strong><span>친구들과 함께 저장한 장소를 확인하고 추가해요.</span><small>Google Maps 공동 장소 목록 11개</small></div><div class="mapQuickLinks"><a class="sharedMapOpen" href="https://maps.app.goo.gl/AkaM9b4B2U3D7UmPA" target="_blank" rel="noopener noreferrer">Google 지도 열기 ↗</a><a class="naverMapOpen" href="https://map.naver.com/p/search/경주" target="_blank" rel="noopener noreferrer">네이버 지도에서 보기 ↗</a></div></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="panel" id="panel-wishlist">
+  <section class="panel active" id="panel-wishlist">
     <div class="sectionHead"><div><h2>가고 싶은 곳</h2><p>구글맵에서 발견한 장소 중 꼭 가보고 싶은 곳을 함께 모아요.</p></div></div>
     <div class="card wishFormCard"><h3 id="wishFormTitle">가고 싶은 장소 추가</h3><div class="wishFormGrid">
       <div class="field"><label>장소명</label><input id="wishName" placeholder="예: 황리단길 소품샵"/></div>
