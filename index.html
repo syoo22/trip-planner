@@ -207,6 +207,32 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  .heroThumbnail{height:330px;min-height:330px}
  .heroMainCopy{top:40%}
 }
+
+/* Shared real-time travel bingo */
+.bingoIntro{padding:15px 17px;margin-bottom:13px}
+.bingoIntro>div:first-child{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+.bingoEyebrow{font-size:9px;letter-spacing:.16em;color:#819081;font-weight:800}
+.bingoIntro strong{font-size:13px;color:var(--green)}
+.bingoProgressTrack{height:7px;background:#edf0eb;border-radius:99px;overflow:hidden}
+.bingoProgressTrack span{display:block;height:100%;width:0;background:var(--green);border-radius:99px;transition:width .25s ease}
+.bingoAddCard{padding:15px 17px;margin-bottom:15px}
+.bingoAddCard>label{display:block;font-size:12px;font-weight:750;margin-bottom:8px}
+.bingoAddRow{display:flex;gap:8px}
+.bingoAddRow input{min-width:0;flex:1;border:1px solid var(--line);border-radius:11px;padding:11px 12px;background:#fff;font-size:13px}
+.bingoAddCard>p{font-size:10px;color:var(--muted);margin:8px 0 0}
+.bingoBoardWrap{max-width:680px;margin:0 auto}
+.bingoBoard{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px}
+.bingoCell{position:relative;min-width:0;aspect-ratio:1/1;border:1px solid #dfe6dc;border-radius:13px;background:#fff;padding:8px 5px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;text-align:center;overflow:hidden;cursor:pointer;transition:background .2s,border-color .2s,transform .2s}
+.bingoCell:active{transform:scale(.97)}
+.bingoCell.done{background:#e9f1e9;border-color:#9db7a0}
+.bingoCell .bingoMission{font-size:clamp(9px,1.5vw,12px);font-weight:700;line-height:1.35;overflow-wrap:anywhere;z-index:1}
+.bingoCell .bingoCreator,.bingoCell .bingoCompleter{font-size:8px;color:#879287;line-height:1.2;z-index:1}
+.bingoCell.done:after{content:"";position:absolute;width:70%;aspect-ratio:1;border:3px solid rgba(63,112,78,.68);border-radius:50%;pointer-events:none}
+.bingoCell.done .bingoMission{color:#365c49}
+.bingoCell.empty{border-style:dashed;background:#fafbf9;color:#a2aaa1;cursor:default}
+.bingoCell.empty .bingoMission{font-weight:500;color:#a2aaa1}
+.bingoHint{text-align:center;color:var(--muted);font-size:10px;margin:10px 0 0}
+@media(max-width:650px){.nav{grid-template-columns:repeat(6,minmax(0,1fr))}.bingoBoard{gap:5px}.bingoCell{border-radius:9px;padding:5px 2px;gap:3px}.bingoCell .bingoMission{font-size:9px}.bingoCell .bingoCreator,.bingoCell .bingoCompleter{font-size:7px}.bingoCell.done:after{border-width:2px}}
 </style>
 </head>
 <body>
@@ -253,6 +279,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <button data-tab="schedule"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="17" rx="2.5"/><path d="M8 2.8v3M16 2.8v3M3.5 9h17M8 12.5h.01M12 12.5h.01M16 12.5h.01M8 16.5h.01M12 16.5h.01M16 16.5h.01"/></svg></span><span class="navLabel">일정</span></button>
     <button data-tab="expenses"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="2.8" y="5.5" width="18.4" height="13" rx="2.5"/><path d="M2.8 10h18.4M16 14.5h2.2"/></svg></span><span class="navLabel">경비</span></button>
     <button data-tab="supplies"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M8 20h8M10 20v-3.2a5.7 5.7 0 0 1-5.5-5.7 3.2 3.2 0 0 1 4.7-2.8 3.4 3.4 0 1 1 5.6 0 3.2 3.2 0 0 1 4.7 2.8 5.7 5.7 0 0 1-5.5 5.7V20"/></svg></span><span class="navLabel">준비물</span></button>
+    <button data-tab="bingo"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg></span><span class="navLabel">빙고</span></button>
     <button data-tab="album"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="15" rx="2.5"/><circle cx="8.5" cy="9.5" r="1.4"/><path d="m21 15-5-5L5 20"/></svg></span><span class="navLabel">앨범</span></button>
   </nav>
 
@@ -299,6 +326,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div id="expenseList" class="expenseDays"></div>
   </section>
 
+  <section class="panel" id="panel-bingo">
+    <div class="sectionHead"><div><h2>우리의 여행 빙고</h2><p>여행 중 함께 해보고 싶은 미션을 채우고, 완료하면 동그라미를 표시해요.</p></div></div>
+    <div class="bingoIntro card"><div><span class="bingoEyebrow">OUR TRAVEL CHALLENGE</span><strong id="bingoProgress">0 / 25 미션 완료</strong></div><div class="bingoProgressTrack"><span id="bingoProgressBar"></span></div></div>
+    <div class="card bingoAddCard"><label for="bingoMissionInput">새로운 여행 미션</label><div class="bingoAddRow"><input id="bingoMissionInput" maxlength="48" placeholder="예: 네 명이 함께 인생 사진 찍기"><button class="btn" type="button" onclick="addBingoMission()">＋ 추가</button></div><p>미션을 적은 사람의 이름이 칸 아래에 기록돼요.</p></div>
+    <div class="bingoBoardWrap"><div id="bingoBoard" class="bingoBoard" aria-label="여행 빙고판"></div></div>
+    <p class="bingoHint">미션 칸을 누르면 완료 표시가 돼요. 다시 누르면 취소할 수 있어요.</p>
+  </section>
   <section class="panel" id="panel-album">
     <div class="sectionHead"><div><h2>우리의 여행 앨범</h2><p>함께 찍은 사진을 올리면 날짜별로 자동 정리돼요.</p></div></div>
     <div class="card albumUploadCard">
@@ -389,7 +423,7 @@ let activeTripId=localStorage.getItem('active-trip-id')||DEFAULT_TRIP_ID;
 let trips=[];let latestTripSnapshot=null;
 let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[],"wishlist":[],"supplies":[]}');
 state.wishlist=state.wishlist||[];state.supplies=state.supplies||[];
-state.album=state.album||[];
+state.album=state.album||[];state.bingo=state.bingo||[];
 const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",authDomain:"trip-planner-9d568.firebaseapp.com",projectId:"trip-planner-9d568",storageBucket:"trip-planner-9d568.firebasestorage.app",messagingSenderId:"843026205449",appId:"1:843026205449:web:938f3dbc7bcde76c9061d8"};
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
 if(!settings.firebaseConfig){settings.firebaseConfig=JSON.stringify(defaultFirebaseConfig);localStorage.setItem(SETTINGS,JSON.stringify(settings));}
@@ -398,6 +432,34 @@ let firebaseApp=null, auth=null, presenceTimer=null, currentPresenceUid=null, on
 const colors={'시연':'#557b62','민경':'#c17b58','다인':'#7886a5','윤진':'#b18a48'};
 const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
 function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
+
+function renderBingo(){
+ const items=(state.bingo||[]).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+ const done=items.filter(x=>x.done).length;
+ $('bingoProgress').textContent=done+' / 25 미션 완료';
+ $('bingoProgressBar').style.width=(done/25*100)+'%';
+ $('bingoBoard').innerHTML=Array.from({length:25},(_,i)=>{
+  const item=items[i];
+  if(!item)return '<div class="bingoCell empty"><span class="bingoMission">미션을 추가해 주세요</span><span class="bingoCreator">빈 칸 '+(i+1)+'</span></div>';
+  return '<button type="button" class="bingoCell '+(item.done?'done':'')+'" data-id="'+esc(item.id)+'" onclick="toggleBingoMission(this.dataset.id)" aria-pressed="'+!!item.done+'"><span class="bingoMission">'+esc(item.text)+'</span><span class="bingoCreator">작성 '+esc(item.createdBy||'친구')+'</span>'+(item.done?'<span class="bingoCompleter">완료 '+esc(item.completedBy||'친구')+'</span>':'')+'</button>';
+ }).join('');
+}
+window.addBingoMission=()=>{
+ const input=$('bingoMissionInput'),textValue=input.value.trim();
+ if(!textValue)return toast('미션 내용을 입력해 주세요.');
+ if((state.bingo||[]).length>=25)return toast('빙고판 25칸이 모두 채워졌어요.');
+ state.bingo=state.bingo||[];
+ state.bingo.push({id:'bingo_'+crypto.randomUUID(),text:textValue,createdBy:getCurrentMemberName(),createdAt:Date.now(),done:false,completedBy:'',completedAt:null});
+ input.value='';persist();renderBingo();toast('여행 미션을 추가했어요.');
+};
+window.toggleBingoMission=id=>{
+ const item=(state.bingo||[]).find(x=>x.id===id);if(!item)return;
+ if(item.done){item.done=false;item.completedBy='';item.completedAt=null;toast('미션 완료를 취소했어요.')}
+ else{item.done=true;item.completedBy=getCurrentMemberName();item.completedAt=Date.now();toast(item.completedBy+'님이 미션을 완료했어요!')}
+ persist();renderBingo();
+};
+$('bingoMissionInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addBingoMission()}});
+
 
 const openAlbumCommentPanels=new Set();
 const openAlbumLikePanels=new Set();
@@ -500,7 +562,7 @@ window.openPlan=()=>{editingPlanId=null;$('planModalTitle').textContent='일정 
 window.editPlan=id=>{let p=state.plans.find(x=>x.id===id);if(!p)return;editingPlanId=id;$('planModalTitle').textContent='일정 수정';$('savePlanBtn').textContent='수정 완료';$('planDay').value=p.day||'DAY 1';$('planTime').value=p.time||'11:00';$('planBy').value=p.by||'시연';$('planCategory').value=p.category||'맛집';$('planName').value=p.name||'';$('planNote').value=p.note||'';$('planModal').classList.add('show')};
 window.openExpense=()=>{$('eDate').value=new Date().toISOString().slice(0,10);$('eName').focus()};
 window.closeModal=id=>$(id).classList.remove('show');
-document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='map'&&map)setTimeout(()=>map.invalidateSize(),100)}));
+document.querySelectorAll('.nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('.nav button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('.panel').forEach(x=>x.classList.remove('active'));b.classList.add('active');$('panel-'+b.dataset.tab).classList.add('active');if(b.dataset.tab==='map'&&map)setTimeout(()=>map.invalidateSize(),100);if(b.dataset.tab==='bingo')renderBingo()}));
 
 window.savePlace=async()=>{let name=$('pName').value.trim(),address=$('pAddress').value.trim(),by=$('pBy').value,category=$('pCategory').value;if(!name||!address)return toast('장소명과 도로명 주소를 모두 입력해 주세요.');let btn=$('savePlaceBtn');btn.disabled=true;btn.textContent='주소 확인 중...';try{let query=/경주|경상북도/.test(address)?address:'경주시 '+address;let params=new URLSearchParams({format:'jsonv2',limit:'1',countrycodes:'kr',q:query,viewbox:'128.9,36.0,129.5,35.6',bounded:'1'});let res=await fetch('https://nominatim.openstreetmap.org/search?'+params.toString(),{headers:{Accept:'application/json'}});if(!res.ok)throw new Error('geocode failed');let results=await res.json();if(!results.length){toast('주소를 찾지 못했어요. 도로명 주소를 다시 확인해 주세요.');return}let match=results[0];if(editingPlaceId){let p=state.places.find(x=>x.id===editingPlaceId);if(!p)return;p.name=name;p.address=address;p.by=by;p.category=category;p.lat=Number(match.lat);p.lng=Number(match.lon);persist();toast('장소 정보를 수정했어요.')}else{let p={id:crypto.randomUUID(),name,category,by,address,note:'',lat:Number(match.lat),lng:Number(match.lon),likes:[],done:false,created:Date.now()};state.places.push(p);persist();toast('장소를 저장하고 지도에 핀을 표시했어요.')}let saved=state.places.find(x=>x.id===editingPlaceId)||state.places[state.places.length-1];if(map&&saved){map.setView([saved.lat,saved.lng],16,{animate:true});setTimeout(()=>{let pin=markers.find(m=>m.getLatLng().lat===saved.lat&&m.getLatLng().lng===saved.lng);if(pin)pin.openPopup()},250)}editingPlaceId=null;closeModal('placeModal');$('pName').value='';$('pAddress').value=''}catch(e){console.error(e);toast('주소 확인에 실패했어요. 잠시 후 다시 시도해 주세요.')}finally{btn.disabled=false;btn.textContent=editingPlaceId?'수정 완료':'저장하기'}};let draggedPlanId=null,touchPlanId=null;
 window.planDragStart=ev=>{draggedPlanId=ev.currentTarget.dataset.planId;ev.dataTransfer.effectAllowed='move';ev.dataTransfer.setData('text/plain',draggedPlanId);ev.currentTarget.classList.add('plan-dragging')};
@@ -602,7 +664,7 @@ window.deletePlan=id=>{if(!confirm('이 일정을 삭제할까요?'))return;stat
 window.deleteExpense=id=>{state.expenses=state.expenses.filter(x=>x.id!==id);persist()};
 window.saveSettings=async()=>{settings={firebaseConfig:$('firebaseConfig').value.trim()};localStorage.setItem(SETTINGS,JSON.stringify(settings));closeModal('setupModal');await connectServices();};
 function render(){
- renderWishlist();renderSupplies();renderAlbum();
+ renderWishlist();renderSupplies();renderAlbum();renderBingo();
  state.plans.forEach(p=>{if(p.day==='DAY 3')p.day='DAY 2'});let days=['DAY 1','DAY 2'];$('scheduleList').innerHTML=days.map(d=>`<div class="day"><div class="dayHead"><strong>${d} <span style="font-size:13px;font-weight:600;color:var(--muted);margin-left:7px">${d==='DAY 1'?'11/21':'11/22'}</span></strong><span class="tag">${state.plans.filter(p=>p.day===d).length} PLANS</span></div><div class="timeline" data-day="${d}" ondragover="planDragOver(event)" ondrop="planDrop(event)">${state.plans.filter(p=>p.day===d).map(p=>`<div class="planItem" draggable="true" data-plan-id="${p.id}" ondragstart="planDragStart(event)" ondragend="planDragEnd(event)" ondragover="planDragOver(event)" ondrop="planDrop(event)"><span class="planDragHandle" aria-label="일정 이동" title="드래그해서 순서 변경" onpointerdown="planTouchStart(event)">⠿</span><span class="planTime">${esc(p.time)}</span><span class="planName"><span style="display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true">${({'맛집':'🍽️','카페':'☕','관광지':'📷','숙소':'🏠'}[p.category||'맛집'])}</span><span>${esc(p.name)}</span></span><small style="display:block;color:#8a938a;font-weight:500;margin-top:3px">${esc(p.by||'작성자 미지정')}</small>${p.note?`<small style="display:block;color:#8a938a;font-weight:400;margin-top:3px">${esc(p.note)}</small>`:''}</span><div style="display:flex;gap:5px;align-items:center"><button class="mini" onclick="event.stopPropagation();editPlan('${p.id}')">수정</button><button class="mini" onclick="event.stopPropagation();deletePlan('${p.id}')">삭제</button></div></div>`).join('')||'<div class="empty">아직 등록된 일정이 없어요.</div>'}</div></div>`).join('');
  let total=state.expenses.reduce((s,e)=>s+Number(e.amount),0),people=['시연','민경','다인','윤진'],share=total/people.length;$('totalExpense').textContent=money(total);$('perPerson').textContent=money(Math.ceil(share));$('expenseCount').textContent=state.expenses.length+'건';$('expenseToday').textContent=new Date().toISOString().slice(0,10);$('expenseDayCount').textContent=state.expenses.length+'건';
  let paid={};people.forEach(p=>paid[p]=0);state.expenses.forEach(e=>{if(paid[e.by]!==undefined)paid[e.by]+=Number(e.amount)});let balances=people.map(name=>({name,net:paid[name]-share}));let debtors=balances.filter(x=>x.net<-.5).map(x=>({...x,amount:-x.net})),creditors=balances.filter(x=>x.net>.5).map(x=>({...x,amount:x.net})),transfers=[];let di=0,ci=0;while(di<debtors.length&&ci<creditors.length){let amount=Math.min(debtors[di].amount,creditors[ci].amount);if(amount>.5)transfers.push({from:debtors[di].name,to:creditors[ci].name,amount:Math.round(amount)});debtors[di].amount-=amount;creditors[ci].amount-=amount;if(debtors[di].amount<.5)di++;if(creditors[ci].amount<.5)ci++}
@@ -674,10 +736,10 @@ async function connectServices(){
  }catch(e){console.error(e);$('connection').innerHTML='<i class="dot"></i>연결 오류';toast('Firebase 설정 JSON을 확인해 주세요.')}
 }
 function applyTripSnapshot(snap){
- const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[]};
+ const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[],bingo:[]};
  const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
  snap.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
- snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted'||v.kind==='supplyDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply'&&!deletedSupplyIds.has(v.id))next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data)});
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted'||v.kind==='supplyDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto','bingo'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply'&&!deletedSupplyIds.has(v.id))next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data);if(v.kind==='bingo')next.bingo.push(v.data)});
  if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
  localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
  state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
@@ -686,7 +748,7 @@ async function syncAll(){
  if(!db)return;
  const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
  if(latestTripSnapshot)latestTripSnapshot.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
- const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.filter(data=>!deletedSupplyIds.has(data.id)).map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data}))];
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.filter(data=>!deletedSupplyIds.has(data.id)).map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data})),...state.bingo.map(data=>({id:data.id,kind:'bingo',data}))];
  try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
 }
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
@@ -746,7 +808,7 @@ window.createTrip=async()=>{
  }
  const id='trip-'+crypto.randomUUID();
  const t={id,kind:'trip',name,location:name.replace(/\\s*여행\\s*$/,''),startDate,endDate,cover,mapUrl:$('newTripMap').value.trim(),createdAt:Date.now()};
- try{if(db)await setDoc(doc(db,'gyeongjuTrip','trip_'+id),t);trips.push(t);activeTripId=id;localStorage.setItem('active-trip-id',id);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};localStorage.setItem(STORE,JSON.stringify(state));closeModal('addTripModal');render();renderTripDashboard();showWorkspace();toast('새 여행을 만들었어요.')}catch(e){console.error(e);toast('여행을 만들지 못했어요. 연결 상태를 확인해 주세요.')}
+ try{if(db)await setDoc(doc(db,'gyeongjuTrip','trip_'+id),t);trips.push(t);activeTripId=id;localStorage.setItem('active-trip-id',id);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[],bingo:[]};localStorage.setItem(STORE,JSON.stringify(state));closeModal('addTripModal');render();renderTripDashboard();showWorkspace();toast('새 여행을 만들었어요.')}catch(e){console.error(e);toast('여행을 만들지 못했어요. 연결 상태를 확인해 주세요.')}
 };
 
 window.deleteTrip=async id=>{
@@ -755,7 +817,7 @@ window.deleteTrip=async id=>{
  try{
   if(db&&latestTripSnapshot){
    const removals=[];
-   latestTripSnapshot.forEach(d=>{const v=d.data();if((v.kind==='trip'&&v.id===id)||(['place','plan','expense','wishlist','supply'].includes(v.kind)&&(v.tripId||DEFAULT_TRIP_ID)===id))removals.push(deleteDoc(doc(db,'gyeongjuTrip',d.id)))});
+   latestTripSnapshot.forEach(d=>{const v=d.data();if((v.kind==='trip'&&v.id===id)||(['place','plan','expense','wishlist','supply','bingo'].includes(v.kind)&&(v.tripId||DEFAULT_TRIP_ID)===id))removals.push(deleteDoc(doc(db,'gyeongjuTrip',d.id)))});
    if(!removals.some(Boolean)&&id!==DEFAULT_TRIP_ID)removals.push(deleteDoc(doc(db,'gyeongjuTrip','trip_'+id)));
    await Promise.all(removals);
    if(id===DEFAULT_TRIP_ID)await setDoc(doc(db,'gyeongjuTrip','trip_deleted_'+id),{kind:'tripDeleted',id,deletedAt:Date.now()});
