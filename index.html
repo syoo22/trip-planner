@@ -198,6 +198,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  .heroCountdownWrap .countdownUnits>b{font-size:14px;margin-top:-6px}
  .heroCountdownWrap #countdownMessage{font-size:8px}
 }
+
+/* Refine hero proportions and restore right-aligned dashboard button */
+.heroThumbnail{height:clamp(320px,36vw,420px);min-height:320px}
+.tripDetailHeading{justify-content:flex-end}
+.tripDetailHeading>button{margin-left:auto}
+@media(max-width:650px){
+ .heroThumbnail{height:330px;min-height:330px}
+ .heroMainCopy{top:40%}
+}
 </style>
 </head>
 <body>
