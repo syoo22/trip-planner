@@ -390,8 +390,10 @@ window.submitAlbumComment=(event,id)=>{
 window.deleteAlbumPhoto=async id=>{
  if(!confirm('이 사진을 앨범에서 삭제할까요?'))return;
  const photo=state.album.find(item=>item.id===id);if(!photo)return;
+ if(!db)return toast('실시간 공유 연결 후 다시 시도해 주세요.');
  try{
-  if(db)await deleteDoc(doc(db,'gyeongjuTrip',id));
+  await setDoc(doc(db,'gyeongjuTrip','albumDeleted_'+id),{kind:'albumPhotoDeleted',id:'albumDeleted_'+id,photoId:id,tripId:activeTripId,deletedAt:Date.now()});
+  await deleteDoc(doc(db,'gyeongjuTrip',id));
   state.album=state.album.filter(item=>item.id!==id);
   localStorage.setItem(STORE,JSON.stringify(state));
   render();
@@ -523,14 +525,18 @@ async function connectServices(){
 }
 function applyTripSnapshot(snap){
  const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[]};
- snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data);if(v.kind==='albumPhoto')next.album.push(v.data)});
+ const deletedAlbumIds=new Set();
+ snap.forEach(d=>{const v=d.data();if(v.kind==='albumPhotoDeleted'&&(v.tripId||DEFAULT_TRIP_ID)===activeTripId)deletedAlbumIds.add(v.photoId||v.id)});
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data)});
  if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
  localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
  state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
 }
 async function syncAll(){
  if(!db)return;
- const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data})),...state.album.map(data=>({id:data.id,kind:'albumPhoto',data}))];
+ const deletedAlbumIds=new Set();
+ if(latestTripSnapshot)latestTripSnapshot.forEach(d=>{const v=d.data();if(v.kind==='albumPhotoDeleted'&&(v.tripId||DEFAULT_TRIP_ID)===activeTripId)deletedAlbumIds.add(v.photoId||v.id)});
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data}))];
  try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
 }
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
