@@ -112,6 +112,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   text-align:center;
   min-width:0;
 }
+.albumUploadCard{padding:18px;margin-bottom:22px}.albumUploadIntro{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}.albumUploadIntro strong{font-size:15px}.albumUploadIntro span,.albumUploadHint{font-size:11px;color:var(--muted);line-height:1.6}.albumUploadButton{width:100%;padding:13px}.albumUploadHint{text-align:center;margin-top:9px}.albumSummary,.albumDateHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.albumSummary{margin:0 2px 14px}.albumSummary h3{font-size:17px;margin:0}.albumSummary span,.albumDateHead span{font-size:11px;color:var(--muted)}.albumGallery{display:flex;flex-direction:column;gap:22px}.albumDateGroup{display:flex;flex-direction:column;gap:10px}.albumDateHead{padding:0 2px}.albumDateHead strong{font-size:13px;color:var(--green)}.albumGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.albumPhotoCard{min-width:0;overflow:hidden;border-radius:13px;background:#fff;border:1px solid var(--line)}.albumPhotoCard img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}.albumPhotoMeta{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:7px 8px}.albumPhotoMeta span{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.albumDelete{font-size:10px;color:#a65b4e;background:#f8efec;border-radius:7px;padding:5px 7px;flex-shrink:0}.albumEmpty{padding:30px 18px;display:flex;flex-direction:column;gap:7px;text-align:center}.albumEmpty strong{font-size:14px}.albumEmpty span{font-size:11px;color:var(--muted)}@media(max-width:520px){.albumGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 </style>
 </head>
 <body>
@@ -154,6 +155,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <button data-tab="wishlist">가고 싶어요</button>
     <button data-tab="schedule">여행 일정</button>
     <button data-tab="expenses">여행 경비</button><button data-tab="supplies">여행 준비물</button>
+    <button data-tab="album">여행 앨범</button>
   </nav>
 
   <section class="panel active" id="panel-map">
@@ -212,6 +214,17 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div id="expenseList" class="expenseDays"></div>
   </section>
 
+  <section class="panel" id="panel-album">
+    <div class="sectionHead"><div><h2>우리의 여행 앨범</h2><p>함께 찍은 사진을 올리면 날짜별로 자동 정리돼요.</p></div></div>
+    <div class="card albumUploadCard">
+      <div class="albumUploadIntro"><strong>여행 사진 모으기</strong><span>여러 장을 한 번에 추가할 수 있어요. 사진은 이 여행에 함께 공유돼요.</span></div>
+      <input id="albumPhotoInput" type="file" accept="image/*" multiple hidden>
+      <button class="btn albumUploadButton" type="button" onclick="document.getElementById('albumPhotoInput').click()">＋ 사진 추가하기</button>
+      <div class="albumUploadHint">사진은 자동으로 날짜별 앨범에 모여요.</div>
+    </div>
+    <div class="albumSummary"><h3>여행 사진</h3><span id="albumPhotoCount">0장</span></div>
+    <div id="albumGallery" class="albumGallery"></div>
+  </section>
   <section class="panel" id="panel-supplies">
     <div class="sectionHead"><div><h2>여행 준비물</h2><p>필요한 준비물을 적고, 챙겼다면 체크해 주세요.</p></div></div>
     <div class="supplyProgress card"><div class="supplyProgressTop"><div><strong>준비 완료</strong><span id="supplyProgressText">0 / 0개</span></div><strong id="supplyProgressPct">0%</strong></div><div class="supplyTrack"><span id="supplyProgressBar"></span></div></div>
@@ -290,6 +303,7 @@ let activeTripId=localStorage.getItem('active-trip-id')||DEFAULT_TRIP_ID;
 let trips=[];let latestTripSnapshot=null;
 let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[],"wishlist":[],"supplies":[]}');
 state.wishlist=state.wishlist||[];state.supplies=state.supplies||[];
+state.album=state.album||[];
 const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",authDomain:"trip-planner-9d568.firebaseapp.com",projectId:"trip-planner-9d568",storageBucket:"trip-planner-9d568.firebasestorage.app",messagingSenderId:"843026205449",appId:"1:843026205449:web:938f3dbc7bcde76c9061d8"};
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
 if(!settings.firebaseConfig){settings.firebaseConfig=JSON.stringify(defaultFirebaseConfig);localStorage.setItem(SETTINGS,JSON.stringify(settings));}
@@ -298,6 +312,30 @@ let firebaseApp=null, auth=null, presenceTimer=null, currentPresenceUid=null, on
 const colors={'시연':'#557b62','민경':'#c17b58','다인':'#7886a5','윤진':'#b18a48'};
 const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
 function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
+
+function renderAlbum(){
+ const photos=(state.album||[]).slice().sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+ $('albumPhotoCount').textContent=photos.length+'장';
+ const groups=new Map();
+ photos.forEach(photo=>{const date=new Date(photo.createdAt||Date.now());const key=date.getFullYear()+'. '+String(date.getMonth()+1).padStart(2,'0')+'. '+String(date.getDate()).padStart(2,'0')+'.';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(photo)});
+ $('albumGallery').innerHTML=photos.length?[...groups.entries()].map(([date,items])=>'<section class="albumDateGroup"><div class="albumDateHead"><strong>'+esc(date)+'</strong><span>'+items.length+'장</span></div><div class="albumGrid">'+items.map(photo=>'<article class="albumPhotoCard"><img src="'+photo.image+'" alt="여행 사진" loading="lazy"><div class="albumPhotoMeta"><span>'+esc(photo.by||'함께한 사진')+'</span><button type="button" class="albumDelete" onclick="deleteAlbumPhoto(\''+photo.id+'\')">삭제</button></div></article>').join('')+'</div></section>').join(''):'<div class="card albumEmpty"><strong>아직 사진이 없어요.</strong><span>여행 중 찍은 사진을 추가해 첫 페이지를 만들어 보세요.</span></div>';
+}
+async function compressAlbumPhoto(file){
+ const raw=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
+ const img=await new Promise((resolve,reject)=>{const image=new Image();image.onload=()=>resolve(image);image.onerror=reject;image.src=raw});
+ const scale=Math.min(1,1100/Math.max(img.width,img.height));const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(img.width*scale));canvas.height=Math.max(1,Math.round(img.height*scale));canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height);return canvas.toDataURL('image/jpeg',.68);
+}
+window.addAlbumPhotos=async files=>{
+ const selected=[...files].filter(file=>file.type.startsWith('image/'));if(!selected.length)return;
+ if(selected.length>12){toast('한 번에 최대 12장까지 추가할 수 있어요.');return}
+ const input=$('albumPhotoInput');input.disabled=true;
+ try{for(const file of selected){const image=await compressAlbumPhoto(file);const photo={id:'album_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),image,by:members.find(m=>m.uid===auth?.currentUser?.uid)?.name||'함께한 사진',createdAt:Date.now()};state.album.push(photo)}persist();toast(selected.length+'장의 사진을 앨범에 추가했어요.')}
+ catch(error){console.error(error);toast('사진을 추가하지 못했어요. 용량이 작은 사진으로 다시 시도해 주세요.')}
+ finally{input.disabled=false;input.value=''}
+};
+window.deleteAlbumPhoto=id=>{if(!confirm('이 사진을 앨범에서 삭제할까요?'))return;state.album=state.album.filter(photo=>photo.id!==id);persist();toast('사진을 삭제했어요.')};
+$('albumPhotoInput').addEventListener('change',event=>addAlbumPhotos(event.target.files));
+
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2200)}
 window.openSetup=()=>{$('mapsKey').value=settings.mapsKey||'';$('firebaseConfig').value=settings.firebaseConfig||'';$('setupModal').classList.add('show')};
 let editingPlaceId=null;
@@ -345,7 +383,7 @@ window.deletePlan=id=>{if(!confirm('이 일정을 삭제할까요?'))return;stat
 window.deleteExpense=id=>{state.expenses=state.expenses.filter(x=>x.id!==id);persist()};
 window.saveSettings=async()=>{settings={firebaseConfig:$('firebaseConfig').value.trim()};localStorage.setItem(SETTINGS,JSON.stringify(settings));closeModal('setupModal');await connectServices();};
 function render(){
- renderWishlist();renderSupplies();
+ renderWishlist();renderSupplies();renderAlbum();
  state.plans.forEach(p=>{if(p.day==='DAY 3')p.day='DAY 2'});let days=['DAY 1','DAY 2'];$('scheduleList').innerHTML=days.map(d=>`<div class="day"><div class="dayHead"><strong>${d} <span style="font-size:13px;font-weight:600;color:var(--muted);margin-left:7px">${d==='DAY 1'?'11/21':'11/22'}</span></strong><span class="tag">${state.plans.filter(p=>p.day===d).length} PLANS</span></div><div class="timeline" data-day="${d}" ondragover="planDragOver(event)" ondrop="planDrop(event)">${state.plans.filter(p=>p.day===d).map(p=>`<div class="planItem" draggable="true" data-plan-id="${p.id}" ondragstart="planDragStart(event)" ondragend="planDragEnd(event)" ondragover="planDragOver(event)" ondrop="planDrop(event)"><span class="planDragHandle" aria-label="일정 이동" title="드래그해서 순서 변경" onpointerdown="planTouchStart(event)">⠿</span><span class="planTime">${esc(p.time)}</span><span class="planName"><span style="display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true">${({'맛집':'🍽️','카페':'☕','관광지':'📷','숙소':'🏠'}[p.category||'맛집'])}</span><span>${esc(p.name)}</span></span><small style="display:block;color:#8a938a;font-weight:500;margin-top:3px">${esc(p.by||'작성자 미지정')}</small>${p.note?`<small style="display:block;color:#8a938a;font-weight:400;margin-top:3px">${esc(p.note)}</small>`:''}</span><div style="display:flex;gap:5px;align-items:center"><button class="mini" onclick="event.stopPropagation();editPlan('${p.id}')">수정</button><button class="mini" onclick="event.stopPropagation();deletePlan('${p.id}')">삭제</button></div></div>`).join('')||'<div class="empty">아직 등록된 일정이 없어요.</div>'}</div></div>`).join('');
  let total=state.expenses.reduce((s,e)=>s+Number(e.amount),0),people=['시연','민경','다인','윤진'],share=total/people.length;$('totalExpense').textContent=money(total);$('perPerson').textContent=money(Math.ceil(share));$('expenseCount').textContent=state.expenses.length+'건';$('expenseToday').textContent=new Date().toISOString().slice(0,10);$('expenseDayCount').textContent=state.expenses.length+'건';
  let paid={};people.forEach(p=>paid[p]=0);state.expenses.forEach(e=>{if(paid[e.by]!==undefined)paid[e.by]+=Number(e.amount)});let balances=people.map(name=>({name,net:paid[name]-share}));let debtors=balances.filter(x=>x.net<-.5).map(x=>({...x,amount:-x.net})),creditors=balances.filter(x=>x.net>.5).map(x=>({...x,amount:x.net})),transfers=[];let di=0,ci=0;while(di<debtors.length&&ci<creditors.length){let amount=Math.min(debtors[di].amount,creditors[ci].amount);if(amount>.5)transfers.push({from:debtors[di].name,to:creditors[ci].name,amount:Math.round(amount)});debtors[di].amount-=amount;creditors[ci].amount-=amount;if(debtors[di].amount<.5)di++;if(creditors[ci].amount<.5)ci++}
@@ -417,15 +455,15 @@ async function connectServices(){
  }catch(e){console.error(e);$('connection').innerHTML='<i class="dot"></i>연결 오류';toast('Firebase 설정 JSON을 확인해 주세요.')}
 }
 function applyTripSnapshot(snap){
- const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};
- snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip')return;if(!['place','plan','expense','wishlist','supply'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});
+ const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[]};
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip')return;if(!['place','plan','expense','wishlist','supply','albumPhoto'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data);if(v.kind==='albumPhoto')next.album.push(v.data)});
  if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
  localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
  state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
 }
 async function syncAll(){
  if(!db)return;
- const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data})),...state.album.map(data=>({id:data.id,kind:'albumPhoto',data}))];
  try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
 }
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
