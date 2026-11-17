@@ -128,35 +128,13 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  .nav button{font-size:9px;padding-left:1px;padding-right:1px}
  .nav .navIcon{font-size:17px}
 }
-/* Editorial travel invitation countdown */
-.tripCountdownSection{position:relative;max-width:760px;margin:0 auto 22px;padding:25px 24px 19px;gap:11px;background:linear-gradient(180deg,rgba(250,249,245,.82),rgba(255,255,255,.38));border:1px solid #e9e8df;border-radius:20px;box-shadow:0 8px 24px rgba(44,60,47,.045);overflow:hidden}
-.tripCountdownSection:before,.tripCountdownSection:after{content:"";position:absolute;left:22px;right:22px;height:1px;background:linear-gradient(90deg,transparent,#d9dfd5 15%,#d9dfd5 85%,transparent)}
-.tripCountdownSection:before{top:10px}.tripCountdownSection:after{bottom:10px}
-.tripCountdownSection .countdownLabel{font-size:9px;letter-spacing:.24em;color:#7e897f;font-weight:800}
-.countdownOrnament{display:flex;align-items:center;justify-content:center;gap:10px;width:min(210px,55%);color:#a5b09f;font-size:12px;line-height:1}
-.countdownOrnament span{height:1px;flex:1;background:#d9dfd5}
-.countdownUnits{gap:clamp(9px,3vw,27px)}
-.countdownUnits .countdownUnit{min-width:clamp(42px,7vw,66px);gap:7px}
-.countdownUnits .countdownUnit strong{display:block;font-size:clamp(32px,5.4vw,49px);font-weight:500;letter-spacing:.015em;transition:transform .18s ease,opacity .18s ease}
-.countdownUnits .countdownUnit strong.tick{animation:countdownTick .28s ease}
-.countdownUnits .countdownUnit span{font-size:9px;letter-spacing:.16em;color:#7f887f}
-.countdownUnits>b{font-family:Georgia,serif;font-size:25px;color:#b7beb4;margin-top:-13px}
-.countdownBottomRule{display:flex;align-items:center;justify-content:center;width:100%;max-width:340px;color:#a5b09f;font-size:13px;line-height:1}
-.countdownBottomRule:before,.countdownBottomRule:after{content:"";height:1px;flex:1;background:linear-gradient(90deg,transparent,#d9dfd5)}
-.countdownBottomRule:after{background:linear-gradient(90deg,#d9dfd5,transparent)}
-.countdownBottomRule span{padding:0 10px}
-.tripCountdownSection>p{font-family:Georgia,"Apple SD Gothic Neo",serif;font-size:13px;font-weight:600;letter-spacing:.015em;color:#647466;margin:0}
-@keyframes countdownTick{0%{opacity:.45;transform:translateY(4px)}100%{opacity:1;transform:translateY(0)}}
-@media(max-width:650px){
- .tripCountdownSection{padding:22px 12px 17px;margin:0 auto 17px;border-radius:17px;gap:10px}
- .tripCountdownSection:before,.tripCountdownSection:after{left:14px;right:14px}
- .tripCountdownSection .countdownLabel{font-size:8px;letter-spacing:.19em}
- .countdownUnits{gap:clamp(5px,2.2vw,12px);width:100%}
- .countdownUnits .countdownUnit{min-width:0;flex:1;gap:6px}
- .countdownUnits .countdownUnit strong{font-size:clamp(27px,8vw,39px)}
- .countdownUnits .countdownUnit span{font-size:8px;letter-spacing:.1em}
- .countdownUnits>b{font-size:19px;margin-top:-11px}
- .tripCountdownSection>p{font-size:12px}
+/* Flip-clock motion only */
+.countdownUnits .countdownUnit strong{display:block;transform-origin:50% 50%;backface-visibility:hidden}
+.countdownUnits .countdownUnit strong.tick{animation:flipClockDigit .38s cubic-bezier(.2,.7,.25,1)}
+@keyframes flipClockDigit{
+ 0%{transform:perspective(180px) rotateX(85deg);opacity:.25}
+ 55%{transform:perspective(180px) rotateX(-12deg);opacity:1}
+ 100%{transform:perspective(180px) rotateX(0);opacity:1}
 }
 </style>
 </head>
@@ -184,7 +162,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   <div class="tripDetailHeading"><div><span class="detailEyebrow">YOUR TRAVEL JOURNAL</span><h2 id="activeTripTitle">경주 여행</h2><p id="activeTripDates">2026.11.21 - 2026.11.22</p></div><button class="btn ghost" onclick="showDashboard()">여행 목록으로</button></div>
   <section class="tripCountdownSection" aria-label="여행 카운트다운">
     <span class="countdownLabel">OUR TRIP BEGINS IN</span>
-    <div class="countdownOrnament" aria-hidden="true"><span></span><i>✳</i><span></span></div>
     <div class="countdownUnits">
       <div class="countdownUnit"><strong id="countdownDays">09</strong><span>DAYS</span></div>
       <b>:</b>
@@ -194,7 +171,6 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
       <b>:</b>
       <div class="countdownUnit"><strong id="countdownSeconds">00</strong><span>SECONDS</span></div>
     </div>
-    <div class="countdownBottomRule" aria-hidden="true"><span>✧</span></div>
     <p id="countdownMessage">우리의 여행이 곧 시작돼요!</p>
   </section>
   <nav class="nav">
