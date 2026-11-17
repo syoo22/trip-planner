@@ -91,6 +91,27 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .tripArchiveCard{position:relative}.tripArchiveTools{position:absolute;z-index:2;top:12px;right:12px;display:flex;gap:7px}.tripArchiveTools button{background:#ffffffed;color:#365c49;border:1px solid #e8ebe5;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:750;box-shadow:0 3px 12px #17251b12}.tripArchiveTools button.delete{color:#a44c3d}
 .tripCreateModal,.tripCreateModal *{box-sizing:border-box}.tripCreateFields,.tripCreateFields .field{min-width:0;width:100%}.tripCreateFields .field input:not([type=file]){display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box}.tripCreateFields .field input[type=date]{appearance:none;-webkit-appearance:none;text-align:left;padding-left:18px;padding-right:12px;font-size:16px;min-width:0;max-width:100%;overflow:hidden}.tripCreateFields .field input[type=date]{text-align:center;display:flex;align-items:center;justify-content:center;min-height:74px;padding-top:0;padding-bottom:0;line-height:normal}.tripCreateFields .field input[type=date]::-webkit-date-and-time-value{text-align:center}.tripCreateFields .field input[type=date]::-webkit-date-and-time-value{text-align:center;display:flex;align-items:center;justify-content:center;min-height:100%;line-height:normal}..tripCreateFields .field input[type=date]::-webkit-calendar-picker-indicator{margin-left:4px;flex:0 0 auto}@media(max-width:650px){.tripCreateFields .field input[type=date]{font-size:15px;padding-left:14px;padding-right:8px}}
 .tripCoverActions{display:flex;align-items:stretch;gap:10px;width:100%}.tripCoverActions button{min-width:0;min-height:64px;border-radius:18px;font-size:16px;font-weight:750}.tripCoverActions .tripAlbumButton{flex:1;width:auto;min-height:64px;font-size:17px}.tripCoverActions .tripRemoveButton{flex:0 0 auto;padding:0 22px;background:#fff;color:#a44c3d;border:1px solid #e5d9d6}.tripCoverActions [hidden]{display:none!important}.tripCoverPreview button{display:none!important}@media(max-width:650px){.tripCoverActions{gap:8px}.tripCoverActions button{min-height:54px;font-size:14px}.tripCoverActions .tripAlbumButton{min-height:54px;font-size:15px}.tripCoverActions .tripRemoveButton{padding:0 15px}}
+
+/* 여행 경비 결제 날짜 입력이 카드 밖으로 넘치지 않도록 */
+.expenseFormCard .formGrid,
+.expenseFormCard .field{min-width:0;max-width:100%}
+.expenseFormCard .field input[type="date"]{
+  display:block;
+  width:100%;
+  min-width:0;
+  max-width:100%;
+  box-sizing:border-box;
+  -webkit-appearance:none;
+  appearance:none;
+  text-align:center;
+  padding-left:8px;
+  padding-right:8px;
+  overflow:hidden;
+}
+.expenseFormCard .field input[type="date"]::-webkit-date-and-time-value{
+  text-align:center;
+  min-width:0;
+}
 </style>
 </head>
 <body>
