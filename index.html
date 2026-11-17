@@ -345,12 +345,62 @@ async function stopPresence(){
 }
 
 async function connectServices(){
- if(settings.firebaseConfig){try{let cfg=JSON.parse(settings.firebaseConfig);if(!firebaseApp){firebaseApp=initializeApp(cfg);auth=getAuth(firebaseApp)}db=getFirestore(firebaseApp);if(unsubscribe)unsubscribe();unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),snap=>{let next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};let presenceDocs=[];snap.forEach(d=>{let v=d.data();if(v.kind==='presence'){presenceDocs.push(v);return}if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});onlineMembers=presenceDocs;renderPresence();if(previousSupplySnapshot){next.supplies.forEach(item=>{let before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));state=next;localStorage.setItem(STORE,JSON.stringify(state));render();$('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨'},err=>{console.error(err);toast('Firestore 접근 권한을 확인해 주세요.')});$('connection').innerHTML='<i class="dot"></i>공유 연결 중'}catch(e){console.error(e);toast('Firebase 설정 JSON을 확인해 주세요.')}}else{$('connection').innerHTML='<i class="dot"></i>로컬 모드'}
+ if(!settings.firebaseConfig)return;
+ try{
+  const cfg=JSON.parse(settings.firebaseConfig);
+  if(!firebaseApp){firebaseApp=initializeApp(cfg);auth=getAuth(firebaseApp)}
+  db=getFirestore(firebaseApp);
+  if(unsubscribe)unsubscribe();
+  unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),async snap=>{
+   latestTripSnapshot=snap;
+   const meta=[];const presenceDocs=[];
+   snap.forEach(d=>{const v=d.data();if(v.kind==='trip')meta.push({...v,docId:d.id});if(v.kind==='presence')presenceDocs.push(v)});
+   if(!meta.some(t=>t.id===DEFAULT_TRIP_ID)){
+    const legacy={id:DEFAULT_TRIP_ID,kind:'trip',name:'경주 여행',location:'경주',startDate:'2026-11-21',endDate:'2026-11-22',cover:'https://upload.wikimedia.org/wikipedia/commons/d/db/Leaning_trees_over_the_grassy_hillock_of_Nodong-ri_tombs_clouds_and_blue_sky_in_Gyeongju_South_Korea.jpg',mapUrl:'https://maps.app.goo.gl/AkaM9b4B2U3D7UmPA',createdAt:Date.now()};
+    await setDoc(doc(db,'gyeongjuTrip','trip_'+DEFAULT_TRIP_ID),legacy);meta.push(legacy);
+   }
+   trips=meta.sort((a,b)=>(a.startDate||'').localeCompare(b.startDate||''));
+   onlineMembers=presenceDocs;renderPresence();applyTripSnapshot(snap);
+   $('connection').innerHTML='<i class="dot ok"></i>실시간 공유 연결됨';
+  },err=>{console.error(err);$('connection').innerHTML='<i class="dot"></i>공유 연결 오류';toast('Firestore 접근 권한을 확인해 주세요.')});
+  $('connection').innerHTML='<i class="dot"></i>공유 연결 중';
+ }catch(e){console.error(e);$('connection').innerHTML='<i class="dot"></i>연결 오류';toast('Firebase 설정 JSON을 확인해 주세요.')}
 }
-async function syncAll(){if(!db)return;let items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];try{for(let item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),item)}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}}
+function applyTripSnapshot(snap){
+ const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip')return;if(!['place','plan','expense','wishlist','supply'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply')next.supplies.push(v.data)});
+ if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
+ localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
+ state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
+}
+async function syncAll(){
+ if(!db)return;
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.map(data=>({id:data.id,kind:'supply',data}))];
+ try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
+}
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
 render();
 
+function formatTripDate(start,end){const fmt=s=>s?String(s).slice(2).replaceAll('-','.'):'';return fmt(start)+(end?' - '+fmt(end):'')}
+function renderTripDashboard(){
+ $('tripCount').textContent=trips.length+'개';
+ const count=state.places.length+state.plans.length+state.expenses.length+state.wishlist.length+state.supplies.length;
+ $('tripMemoryCount').textContent=count+'개';
+ $('tripCards').innerHTML=trips.map(t=>'<article class="tripArchiveCard" onclick="selectTrip(this.dataset.id)" data-id="'+esc(t.id)+'"><div class="tripArchiveCover" style="background-image:url(&quot;'+esc(t.cover||'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85')+'&quot;)"></div><div class="tripArchiveBody"><div class="tripArchiveDate">'+esc(formatTripDate(t.startDate,t.endDate))+'</div><h3>'+esc(t.name)+'</h3><p>'+esc(t.location||'우리의 여행 기록')+'</p></div></article>').join('')||'<div class="card empty">아직 등록된 여행이 없어요.</div>';
+}
+let currentView='dashboard';
+window.showDashboard=()=>{currentView='dashboard';document.querySelector('.app').classList.add('dashboardMode');document.querySelector('.app').classList.remove('detailMode');renderTripDashboard()};
+window.showWorkspace=()=>{currentView='detail';document.querySelector('.app').classList.remove('dashboardMode');document.querySelector('.app').classList.add('detailMode');const t=trips.find(x=>x.id===activeTripId)||{};$('activeTripTitle').textContent=t.name||'여행 기록';$('activeTripDates').textContent=formatTripDate(t.startDate,t.endDate);if(t.cover)document.querySelector('.heroThumbnail').style.backgroundImage='linear-gradient(180deg,rgba(12,25,17,.12),rgba(12,25,17,.32)),url("'+t.cover+'")';document.querySelector('.heroThumbnail p').textContent=(t.name||'우리의 여행')+' 기록을 함께 만들어요.';const mapLink=document.querySelector('.sharedMapOpen');if(mapLink){mapLink.href=t.mapUrl||'https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행');mapLink.textContent=t.mapUrl?'공동 지도 열기 ↗':'지도 검색하기 ↗'}const mapTitle=document.querySelector('.sharedMapBottom strong');if(mapTitle)mapTitle.textContent=t.name||'우리의 여행';const navLink=document.querySelector('.naverMapOpen');if(navLink)navLink.href='https://map.naver.com/p/search/'+encodeURIComponent(t.location||t.name||'여행')};
+window.selectTrip=id=>{activeTripId=id;localStorage.setItem('active-trip-id',id);previousSupplySnapshot=null;if(latestTripSnapshot)applyTripSnapshot(latestTripSnapshot);else showWorkspace()};
+window.openAddTrip=()=>{$('newTripName').value='';$('newTripStart').value='';$('newTripEnd').value='';$('newTripCover').value='';$('newTripMap').value='';$('addTripModal').classList.add('show')};
+window.createTrip=async()=>{
+ const name=$('newTripName').value.trim(),startDate=$('newTripStart').value,endDate=$('newTripEnd').value;
+ if(!name||!startDate||!endDate)return toast('여행 이름과 시작일, 종료일을 입력해 주세요.');
+ if(endDate<startDate)return toast('종료일은 시작일보다 빠를 수 없어요.');
+ const id='trip-'+crypto.randomUUID();
+ const t={id,kind:'trip',name,location:name.replace(/\s*여행\s*$/,''),startDate,endDate,cover:$('newTripCover').value.trim(),mapUrl:$('newTripMap').value.trim(),createdAt:Date.now()};
+ try{if(db)await setDoc(doc(db,'gyeongjuTrip','trip_'+id),t);trips.push(t);activeTripId=id;localStorage.setItem('active-trip-id',id);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};localStorage.setItem(STORE,JSON.stringify(state));closeModal('addTripModal');render();renderTripDashboard();showWorkspace();toast('새 여행을 만들었어요.')}catch(e){console.error(e);toast('여행을 만들지 못했어요. 연결 상태를 확인해 주세요.')}
+};
 function updateTripCountdown(){
  const start=new Date(2026,10,21,0,0,0);
  const end=new Date(2026,10,23,0,0,0);
