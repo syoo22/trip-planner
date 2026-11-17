@@ -176,6 +176,28 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  .heroCountdownWrap #countdownMessage{font-size:9px}
  .tripDetailHeading{margin:10px 1px 2px}
 }
+
+/* Compact countdown card and simplify hero labels */
+.heroCountdownWrap{width:min(680px,82%);padding:8px 18px 7px;border-radius:15px}
+.heroCountdownWrap .tripCountdownSection{gap:4px}
+.heroCountdownWrap .countdownLabel{font-size:7px;letter-spacing:.16em}
+.heroCountdownWrap .countdownUnits{gap:clamp(10px,2.2vw,20px)}
+.heroCountdownWrap .countdownUnits div{gap:2px;min-width:36px}
+.heroCountdownWrap .countdownUnits strong{font-size:clamp(23px,3vw,31px)}
+.heroCountdownWrap .countdownUnits span{font-size:7px}
+.heroCountdownWrap .countdownUnits>b{font-size:17px;margin-top:-8px}
+.heroCountdownWrap #countdownMessage{font-size:9px}
+@media(max-width:650px){
+ .heroCountdownWrap{width:94%;padding:7px 9px 6px;border-radius:12px}
+ .heroCountdownWrap .tripCountdownSection{gap:3px}
+ .heroCountdownWrap .countdownLabel{font-size:6px}
+ .heroCountdownWrap .countdownUnits{gap:7px}
+ .heroCountdownWrap .countdownUnits div{min-width:29px;gap:1px}
+ .heroCountdownWrap .countdownUnits strong{font-size:22px}
+ .heroCountdownWrap .countdownUnits span{font-size:6px}
+ .heroCountdownWrap .countdownUnits>b{font-size:14px;margin-top:-6px}
+ .heroCountdownWrap #countdownMessage{font-size:8px}
+}
 </style>
 </head>
 <body>
@@ -198,7 +220,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   </header>
   <section class="tripDashboard" id="tripDashboard"><div class="dashboardHero"><div class="dashboardEyebrow">OUR TRIPS</div><h1>우리의 여행</h1><p>만들어 둔 여행을 고르거나, 새로운 여행을 추가해요.</p><div class="dashboardStats"><div><span>함께 기록한 여행</span><strong id="tripCount">1개</strong></div></div></div><div class="dashboardActions"><span>TRAVEL ARCHIVE</span><button class="btn" onclick="openAddTrip()">＋ 여행 추가</button></div><div class="tripCards" id="tripCards"></div></section><div id="tripWorkspace"><section class="heroThumbnail" aria-label="여행 메인 이미지">
     <div class="heroShade" aria-hidden="true"></div>
-    <div class="heroTopline"><span>OUR TRAVEL JOURNAL</span><span class="heroToplineMark">✳ TOGETHER, ALWAYS</span></div>
+    <div class="heroTopline"><span>OUR TRAVEL JOURNAL</span></div>
     <div class="heroMainCopy"><span class="heroKicker">THE NEXT CHAPTER</span><h1 id="heroTripTitle">경주 여행</h1><p id="heroTripDates">2026.11.21 - 2026.11.22</p></div>
     <div class="heroCountdownWrap">
       <section class="tripCountdownSection" aria-label="여행 카운트다운">
@@ -216,7 +238,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
       </section>
     </div>
   </section>
-  <div class="tripDetailHeading"><span class="heroBelowNote">COLLECT MOMENTS, NOT THINGS</span><button class="btn ghost" onclick="showDashboard()">여행 목록으로</button></div>
+  <div class="tripDetailHeading"><button class="btn ghost" onclick="showDashboard()">여행 목록으로</button></div>
   <nav class="nav">
     <button class="active" data-tab="wishlist"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1.1-1.1a5.5 5.5 0 0 0-7.8 7.8l1.1 1.1L12 21l7.8-7.5 1.1-1.1a5.5 5.5 0 0 0-.1-7.8Z"/></svg></span><span class="navLabel">가고싶어요</span></button>
     <button data-tab="schedule"><span class="navIcon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4" width="17" height="17" rx="2.5"/><path d="M8 2.8v3M16 2.8v3M3.5 9h17M8 12.5h.01M12 12.5h.01M16 12.5h.01M8 16.5h.01M12 16.5h.01M16 16.5h.01"/></svg></span><span class="navLabel">일정</span></button>
