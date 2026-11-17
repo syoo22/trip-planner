@@ -350,7 +350,20 @@ window.addAlbumPhotos=async files=>{
  catch(error){console.error('Album upload failed:',error);toast(error?.message||'사진을 추가하지 못했어요. 다시 시도해 주세요.')}
  finally{albumUploadInProgress=false;input.disabled=false;input.value='';$('albumPhotoMemo').value=''}
 };
-window.deleteAlbumPhoto=id=>{if(!confirm('이 사진을 앨범에서 삭제할까요?'))return;state.album=state.album.filter(photo=>photo.id!==id);persist();toast('사진을 삭제했어요.')};
+window.deleteAlbumPhoto=async id=>{
+ if(!confirm('이 사진을 앨범에서 삭제할까요?'))return;
+ const photo=state.album.find(item=>item.id===id);if(!photo)return;
+ try{
+  if(db)await deleteDoc(doc(db,'gyeongjuTrip',id));
+  state.album=state.album.filter(item=>item.id!==id);
+  localStorage.setItem(STORE,JSON.stringify(state));
+  render();
+  toast('사진을 삭제했어요.');
+ }catch(error){
+  console.error('Album photo delete failed:',error);
+  toast('사진을 삭제하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.');
+ }
+};
 $('albumPhotoInput').addEventListener('change',event=>addAlbumPhotos(event.target.files));
 
 function toast(msg){$('toast').textContent=msg;$('toast').classList.add('show');setTimeout(()=>$('toast').classList.remove('show'),2200)}
