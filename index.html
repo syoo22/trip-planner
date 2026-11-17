@@ -88,6 +88,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .dashboardHero{background:linear-gradient(125deg,#e8f0e9 0%,#f3eee5 100%);color:#202820}.dashboardEyebrow{color:#365c49}.dashboardHeart{color:#bd7955}.dashboardHero>p{color:#788078}.dashboardStats{grid-template-columns:minmax(0,1fr);max-width:420px}.dashboardStats>div{background:#fff;border:1px solid #e8ebe5}.dashboardStats span{color:#788078}.dashboardStats strong{color:#365c49}.dashboardHero>small{color:#788078}.dashboardActions>span{color:#788078}.tripArchiveCard{border-color:#e8ebe5}.tripArchiveDate{color:#365c49}.tripArchiveBody h3{color:#202820}.tripArchiveBody p{color:#788078}.dashboardActions .btn{background:#365c49;color:#fff}.dashboardActions .btn:hover{background:#294a39}
 .dashboardHero{padding:36px 34px 28px}.dashboardHero h1{margin:30px 0 10px}.dashboardStats{margin-top:26px;max-width:340px}.dashboardStats>div{padding:16px 20px;border-radius:18px}.dashboardStats strong{font-size:22px;margin-top:5px}.dashboardHero>small{margin-top:14px}@media(max-width:650px){.dashboardHero{padding:26px 22px 22px}.dashboardHero h1{margin:24px 0 9px}.dashboardStats{margin-top:21px;max-width:100%}.dashboardStats>div{padding:14px 16px}.dashboardStats strong{font-size:20px}.dashboardHero>small{margin-top:12px}}
 .dashboardHero{padding:28px 30px 22px}.dashboardHero h1{font-size:clamp(30px,4.8vw,48px);margin:22px 0 8px}.dashboardHero>p{font-size:clamp(13px,1.8vw,18px)}.dashboardStats{margin-top:20px;max-width:270px}.dashboardStats>div{padding:12px 16px;border-radius:16px}.dashboardStats span{font-size:12px}.dashboardStats strong{font-size:19px;margin-top:3px}.dashboardHero>small{font-size:11px;margin-top:10px}@media(max-width:650px){.dashboardHero{padding:23px 19px 18px}.dashboardHero h1{font-size:34px;margin:18px 0 7px}.dashboardHero>p{font-size:13px}.dashboardStats{margin-top:17px;max-width:230px}.dashboardStats>div{padding:10px 14px;border-radius:14px}.dashboardStats span{font-size:11px}.dashboardStats strong{font-size:18px}.dashboardHero>small{font-size:10px;margin-top:9px}}
+.tripArchiveCard{position:relative}.tripArchiveTools{position:absolute;z-index:2;top:12px;right:12px;display:flex;gap:7px}.tripArchiveTools button{background:#ffffffed;color:#365c49;border:1px solid #e8ebe5;border-radius:999px;padding:8px 13px;font-size:12px;font-weight:750;box-shadow:0 3px 12px #17251b12}.tripArchiveTools button.delete{color:#a44c3d}
 </style>
 </head>
 <body>
@@ -410,7 +411,7 @@ render();
 function formatTripDate(start,end){const fmt=s=>s?String(s).slice(2).replaceAll('-','.'):'';return fmt(start)+(end?' - '+fmt(end):'')}
 function renderTripDashboard(){
  $('tripCount').textContent=trips.length+'개';
- $('tripCards').innerHTML=trips.map(t=>'<article class="tripArchiveCard" onclick="selectTrip(this.dataset.id)" data-id="'+esc(t.id)+'"><div class="tripArchiveCover" style="background-image:url(&quot;'+esc(t.cover||'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85')+'&quot;)"></div><div class="tripArchiveBody"><div class="tripArchiveDate">'+esc(formatTripDate(t.startDate,t.endDate))+'</div><h3>'+esc(t.name)+'</h3><p>'+esc(t.location||'우리의 여행 기록')+'</p></div></article>').join('')||'<div class="card empty">아직 등록된 여행이 없어요.</div>';
+ $('tripCards').innerHTML=trips.map(t=>'<article class="tripArchiveCard" onclick="selectTrip(this.dataset.id)" data-id="'+esc(t.id)+'"><div class="tripArchiveCover" style="background-image:url(&quot;'+esc(t.cover||'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1200&q=85')+'&quot;)"></div><div class="tripArchiveTools"><button type="button" onclick="event.stopPropagation();openEditTrip(this.dataset.id)" data-id="'+esc(t.id)+'">수정</button><button type="button" class="delete" onclick="event.stopPropagation();deleteTrip(this.dataset.id)" data-id="'+esc(t.id)+'">삭제</button></div><div class="tripArchiveBody"><div class="tripArchiveDate">'+esc(formatTripDate(t.startDate,t.endDate))+'</div><h3>'+esc(t.name)+'</h3><p>'+esc(t.location||'우리의 여행 기록')+'</p></div></article>').join('')||'<div class="card empty">아직 등록된 여행이 없어요.</div>';
 }
 let currentView='dashboard';
 window.showDashboard=()=>{currentView='dashboard';document.querySelector('.app').classList.add('dashboardMode');document.querySelector('.app').classList.remove('detailMode');renderTripDashboard()};
@@ -436,7 +437,9 @@ async function readTripCover(file){
   showTripCoverPreview(canvas.toDataURL('image/jpeg',.76));
  }catch(e){console.error(e);toast('사진을 불러오지 못했어요. 다른 사진을 선택해 주세요.')}
 }
-window.openAddTrip=()=>{$('newTripName').value='';$('newTripStart').value='';$('newTripEnd').value='';$('newTripMap').value='';$('newTripCoverFile').value='';showTripCoverPreview('');$('addTripModal').classList.add('show')};
+let editingTripId=null;
+window.openAddTrip=()=>{editingTripId=null;$('addTripModal').querySelector('.modalTop h3').textContent='새 여행';$('newTripName').value='';$('newTripStart').value='';$('newTripEnd').value='';$('newTripMap').value='';$('newTripCoverFile').value='';showTripCoverPreview('');$('addTripModal').querySelector('.tripCreateActions .btn:not(.ghost)').textContent='이 여행 만들기';$('addTripModal').classList.add('show')};
+window.openEditTrip=id=>{const t=trips.find(x=>x.id===id);if(!t)return;editingTripId=id;$('addTripModal').querySelector('.modalTop h3').textContent='여행 수정';$('newTripName').value=t.name||'';$('newTripStart').value=t.startDate||'';$('newTripEnd').value=t.endDate||'';$('newTripMap').value=t.mapUrl||'';$('newTripCoverFile').value='';showTripCoverPreview(t.cover||'');$('addTripModal').querySelector('.tripCreateActions .btn:not(.ghost)').textContent='수정 완료';$('addTripModal').classList.add('show')};
 $('newTripCoverFile').addEventListener('change',e=>readTripCover(e.target.files[0]));
 const coverPicker=$('tripCoverPicker');
 coverPicker.addEventListener('dragover',e=>{e.preventDefault();coverPicker.classList.add('dragover')});
@@ -445,11 +448,35 @@ coverPicker.addEventListener('drop',e=>{e.preventDefault();coverPicker.classList
 document.addEventListener('paste',e=>{if(!$('addTripModal').classList.contains('show'))return;const item=[...(e.clipboardData?.items||[])].find(x=>x.type.startsWith('image/'));if(item)readTripCover(item.getAsFile())});
 window.createTrip=async()=>{
  const name=$('newTripName').value.trim(),startDate=$('newTripStart').value,endDate=$('newTripEnd').value;
- if(!name||!startDate||!endDate)return toast('여행 이름과 시작일, 종료일을 입력해 주세요.');
+ if(!name||!startDate||!endDate)return toast('여행지와 시작일, 종료일을 입력해 주세요.');
  if(endDate<startDate)return toast('종료일은 시작일보다 빠를 수 없어요.');
+ const cover=selectedTripCover||'';
+ if(editingTripId){
+  const index=trips.findIndex(x=>x.id===editingTripId);if(index<0)return;
+  const previous=trips[index];
+  const updated={...previous,name,location:name.replace(/\\s*여행\\s*$/,''),startDate,endDate,cover,mapUrl:$('newTripMap').value.trim()};
+  try{if(db)await setDoc(doc(db,'gyeongjuTrip','trip_'+editingTripId),updated);trips[index]=updated;renderTripDashboard();if(activeTripId===editingTripId)showWorkspace();closeModal('addTripModal');editingTripId=null;toast('여행 정보를 수정했어요.')}catch(e){console.error(e);toast('수정하지 못했어요. 연결 상태를 확인해 주세요.')}
+  return;
+ }
  const id='trip-'+crypto.randomUUID();
- const t={id,kind:'trip',name,location:name.replace(/\s*여행\s*$/,''),startDate,endDate,cover:selectedTripCover||'',mapUrl:$('newTripMap').value.trim(),createdAt:Date.now()};
+ const t={id,kind:'trip',name,location:name.replace(/\\s*여행\\s*$/,''),startDate,endDate,cover,mapUrl:$('newTripMap').value.trim(),createdAt:Date.now()};
  try{if(db)await setDoc(doc(db,'gyeongjuTrip','trip_'+id),t);trips.push(t);activeTripId=id;localStorage.setItem('active-trip-id',id);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};localStorage.setItem(STORE,JSON.stringify(state));closeModal('addTripModal');render();renderTripDashboard();showWorkspace();toast('새 여행을 만들었어요.')}catch(e){console.error(e);toast('여행을 만들지 못했어요. 연결 상태를 확인해 주세요.')}
+};
+
+window.deleteTrip=async id=>{
+ const trip=trips.find(x=>x.id===id);if(!trip)return;
+ if(!confirm('"'+trip.name+'" 여행을 삭제할까요? 해당 여행의 일정, 가고 싶은 곳, 경비, 준비물도 모두 삭제돼요.'))return;
+ try{
+  if(db&&latestTripSnapshot){
+   const removals=[];
+   latestTripSnapshot.forEach(d=>{const v=d.data();if((v.kind==='trip'&&v.id===id)||(['place','plan','expense','wishlist','supply'].includes(v.kind)&&(v.tripId||DEFAULT_TRIP_ID)===id))removals.push(deleteDoc(doc(db,'gyeongjuTrip',d.id)))});
+   if(!removals.some(Boolean)&&id!==DEFAULT_TRIP_ID)removals.push(deleteDoc(doc(db,'gyeongjuTrip','trip_'+id)));
+   await Promise.all(removals);
+  }
+  trips=trips.filter(x=>x.id!==id);
+  if(activeTripId===id){activeTripId=trips[0]?.id||DEFAULT_TRIP_ID;localStorage.setItem('active-trip-id',activeTripId);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};localStorage.setItem(STORE,JSON.stringify(state));previousSupplySnapshot=null}
+  renderTripDashboard();showDashboard();toast('여행을 삭제했어요.');
+ }catch(e){console.error(e);toast('삭제하지 못했어요. 연결 상태를 확인해 주세요.')}
 };
 function updateTripCountdown(){
  const trip=trips.find(t=>t.id===activeTripId)||{};
