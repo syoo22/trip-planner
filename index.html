@@ -319,7 +319,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
       <div class="field"><label>분류</label><select id="supplyCategory"><option>전자기기</option><option>의류</option><option>세면도구</option><option>개인용품</option><option>상비약</option><option>필수 서류</option><option>기타</option></select></div>
       <div class="field"><label>담당자</label><select id="supplyBy"><option>공동</option><option>시연</option><option>민경</option><option>다인</option><option>윤진</option></select></div>
     </div><button class="btn supplyAddBtn" onclick="addSupply()">＋ 준비물 추가</button></div>
-    <div class="supplyListHead"><div><h3>준비물 체크리스트</h3><div class="supplyActor"><label for="supplyActor">체크하는 사람</label><select id="supplyActor"><option>시연</option><option>민경</option><option>다인</option><option>윤진</option></select></div></div><div class="supplyFilters"><button class="supplyFilter active" data-supply-filter="all">전체</button><button class="supplyFilter" data-supply-filter="todo">미완료</button><button class="supplyFilter" data-supply-filter="done">완료</button></div></div>
+    <div class="supplyListHead"><div><h3>준비물 체크리스트</h3></div><div class="supplyFilters"><button class="supplyFilter active" data-supply-filter="all">전체</button><button class="supplyFilter" data-supply-filter="todo">미완료</button><button class="supplyFilter" data-supply-filter="done">완료</button></div></div>
     <div id="supplyList" class="supplyList"></div><div class="supplyActivity card"><div class="supplyActivityHead"><h3>최근 준비 현황</h3><span>친구들의 체크 기록</span></div><div id="supplyActivityList"></div></div>
   </section>
   </div>
@@ -522,7 +522,7 @@ window.addSupply=()=>{
  state.supplies.push({id:crypto.randomUUID(),name,category:$('supplyCategory').value,by:$('supplyBy').value,addedBy,createdAt:Date.now(),done:false});
  $('supplyName').value='';persist();toast('준비물을 추가했어요.');
 };
-window.toggleSupply=id=>{let p=state.supplies.find(x=>x.id===id);if(!p)return;p.done=!p.done;if(p.done){p.completedBy=$('supplyActor').value;p.completedAt=Date.now();localSupplyChanges.add(id);toast(p.completedBy+'님이 '+p.name+' 준비를 완료했어요.')}else{p.completedBy='';p.completedAt=null;localSupplyChanges.add(id);toast('완료 체크를 취소했어요.')}persist()};
+window.toggleSupply=id=>{let p=state.supplies.find(x=>x.id===id);if(!p)return;p.done=!p.done;if(p.done){p.completedBy=getCurrentMemberName();p.completedAt=Date.now();localSupplyChanges.add(id);toast(p.completedBy+'님이 '+p.name+' 준비를 완료했어요.')}else{p.completedBy='';p.completedAt=null;localSupplyChanges.add(id);toast('완료 체크를 취소했어요.')}persist()};
 window.deleteSupply=async id=>{
  if(!confirm('이 준비물을 삭제할까요?'))return;
  const item=state.supplies.find(x=>x.id===id);if(!item)return;
