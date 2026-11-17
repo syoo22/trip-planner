@@ -800,7 +800,42 @@ window.saveRoulette=()=>{const name=$('rouletteName').value.trim(),options=[...d
 window.deleteRoulette=id=>{const item=state.roulettes.find(x=>x.id===id);if(!item||!confirm('「'+item.name+'」 룰렛을 삭제할까요?'))return;state.roulettes=state.roulettes.filter(x=>x.id!==id);state.rouletteDeletedIds=state.rouletteDeletedIds||[];state.rouletteDeletedIds.push(id);if(selectedRouletteId===id)selectedRouletteId=null;persist();renderRoulettes();toast('룰렛을 삭제했어요.')};
 window.openRoulette=id=>{selectedRouletteId=id;renderRoulettes();$('roulettePlayArea').scrollIntoView({behavior:'smooth',block:'center'})};
 window.spinRoulette=id=>{const item=state.roulettes.find(x=>x.id===id),wheel=$('rouletteWheel'),button=$('rouletteSpinButton');if(!item||item.options.length<2||!wheel||rouletteSpinning)return;rouletteSpinning=true;if(button){button.disabled=true;button.textContent='룰렛이 돌아가는 중...'}const index=Math.floor(Math.random()*item.options.length),segment=360/item.options.length,center=index*segment+segment/2,target=(360-center+360)%360,current=((rouletteRotation%360)+360)%360,extra=(target-current+360)%360;rouletteRotation+=360*7+extra;wheel.style.transform='rotate('+rouletteRotation+'deg)';clearTimeout(rouletteSpinTimer);rouletteSpinTimer=setTimeout(()=>{item.lastResult={value:item.options[index],by:getCurrentMemberName(),at:Date.now(),spinId:'spin_'+crypto.randomUUID(),index};rouletteSpinning=false;persist();renderRoulettes();toast('결과는 '+item.options[index]+'!')},4350)};
-function renderRoulettes(){const list=$('rouletteList');if(!list)return;list.innerHTML=(state.roulettes||[]).map(item=>'<div class="rouletteListItem"><h4>'+esc(item.name)+'</h4><p>'+item.options.length+'개 항목 · 작성 '+esc(item.createdBy||'친구')+'</p><div class="rouletteItemActions"><button type="button" onclick="openRoulette(\\''+esc(item.id)+'\\')">돌리기</button><button type="button" onclick="editRoulette(\\''+esc(item.id)+'\\')">수정</button><button type="button" class="delete" onclick="deleteRoulette(\\''+esc(item.id)+'\\')">삭제</button></div></div>').join('')||'<div class="card" style="padding:18px;color:var(--muted);font-size:12px">아직 만든 룰렛이 없어요. 첫 번째 룰렛을 만들어 보세요!</div>';const area=$('roulettePlayArea'),item=state.roulettes.find(x=>x.id===selectedRouletteId);if(!item){area.hidden=true;area.innerHTML='';return}area.hidden=false;const colors=['#dce9dc','#f2e8d8','#e8e5ef','#e8dcd5','#dce7e9','#f2ebcf','#e5e9df','#eadfe8'];const n=item.options.length,stops=item.options.map((_,i)=>colors[i%colors.length]+' '+(i*100/n)+'% '+((i+1)*100/n)+'%').join(',');const labels=item.options.map((label,i)=>{const angle=(i+.5)*360/n*Math.PI/180,radius=31,x=50+radius*Math.sin(angle),y=50-radius*Math.cos(angle);return '<span class="rouletteLabel" style="left:'+x+'%;top:'+y+'%">'+esc(label)+'</span>'}).join('');area.innerHTML='<h3>'+esc(item.name)+'</h3><div class="roulettePointer"></div><div class="rouletteWheel" id="rouletteWheel" style="background:conic-gradient('+stops+')">'+labels+'</div><button class="btn rouletteSpinButton" id="rouletteSpinButton" type="button" onclick="spinRoulette(\\''+esc(item.id)+'\\')">룰렛 돌리기</button>'+(item.lastResult?'<div class="rouletteResult">최근 결과: '+esc(item.lastResult.value)+'<br><small>'+esc(item.lastResult.by)+'님 · '+new Date(item.lastResult.at).toLocaleString('ko-KR')+'</small></div>':'<p class="rouletteHelper">아직 결과가 없어요. 룰렛을 돌려보세요!</p>')}
+function renderRoulettes(){
+ const list=$('rouletteList');
+ if(!list)return;
+ list.innerHTML=(state.roulettes||[]).map(item=>`
+  <div class="rouletteListItem">
+   <h4>${esc(item.name)}</h4>
+   <p>${item.options.length}개 항목 · 작성 ${esc(item.createdBy||'친구')}</p>
+   <div class="rouletteItemActions">
+    <button type="button" data-action="open" data-id="${esc(item.id)}">돌리기</button>
+    <button type="button" data-action="edit" data-id="${esc(item.id)}">수정</button>
+    <button type="button" class="delete" data-action="delete" data-id="${esc(item.id)}">삭제</button>
+   </div>
+  </div>`).join('')||'<div class="card" style="padding:18px;color:var(--muted);font-size:12px">아직 만든 룰렛이 없어요. 첫 번째 룰렛을 만들어 보세요!</div>';
+ list.querySelectorAll('button[data-action]').forEach(button=>{
+  button.addEventListener('click',()=>{
+   const id=button.dataset.id;
+   if(button.dataset.action==='open')openRoulette(id);
+   if(button.dataset.action==='edit')editRoulette(id);
+   if(button.dataset.action==='delete')deleteRoulette(id);
+  });
+ });
+ const area=$('roulettePlayArea');
+ const item=state.oulettes?.find(x=>x.id===selectedRouletteId) || state.roulettes.find(x=>x.id===selectedRouletteId);
+ if(!item){area.hidden=true;area.innerHTML='';return}
+ area.hidden=false;
+ const colors=['#dce9dc','#f2e8d8','#e8e5ef','#e8dcd5','#dce7e9','#f2ebcf','#e5e9df','#eadfe8'];
+ const n=item.options.length;
+ const stops=item.options.map((_,i)=>colors[i%colors.length]+' '+(i*100/n)+'% '+((i+1)*100/n)+'%').join(',');
+ const labels=item.options.map((label,i)=>{
+  const angle=(i+.5)*360/n*Math.PI/180,radius=31;
+  const x=50+radius*Math.sin(angle),y=50-radius*Math.cos(angle);
+  return '<span class="rouletteLabel" style="left:'+x+'%;top:'+y+'%">'+esc(label)+'</span>';
+ }).join('');
+ area.innerHTML='<h3>'+esc(item.name)+'</h3><div class="roulettePointer"></div><div class="rouletteWheel" id="rouletteWheel" style="background:conic-gradient('+stops+')">'+labels+'</div><button class="btn rouletteSpinButton" id="rouletteSpinButton" type="button">룰렛 돌리기</button>'+(item.lastResult?'<div class="rouletteResult">최근 결과: '+esc(item.lastResult.value)+'<br><small>'+esc(item.lastResult.by)+'님 · '+new Date(item.lastResult.at).toLocaleString('ko-KR')+'</small></div>':'<p class="rouletteHelper">아직 결과가 없어요. 룰렛을 돌려보세요!</p>');
+ $('rouletteSpinButton').addEventListener('click',()=>spinRoulette(item.id));
+}
 $('rouletteOptionEditor').innerHTML='';addRouletteOptionField();addRouletteOptionField();
 
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
