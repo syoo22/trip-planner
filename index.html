@@ -105,6 +105,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   <section class="tripDashboard" id="tripDashboard"><div class="dashboardHero"><div class="dashboardEyebrow">OUR TRIPS</div><div class="dashboardHeart">♥</div><h1>우리의 여행</h1><p>만들어 둔 여행을 고르거나, 새로운 여행을 추가해요.</p><div class="dashboardStats"><div><span>함께 기록한 여행</span><strong id="tripCount">1개</strong></div><div><span>여행 기록</span><strong id="tripMemoryCount">0개</strong></div></div><small>우리의 소중한 순간을 한곳에 모았어요</small></div><div class="dashboardActions"><span>TRAVEL ARCHIVE</span><button class="btn" onclick="openAddTrip()">＋ 여행 추가</button></div><div class="tripCards" id="tripCards"></div></section><div id="tripWorkspace"><section class="heroThumbnail" aria-label="경주 여행 썸네일">
     <p>신라의 향기가 가득한 경주에서의 1박 2일</p>
   </section>
+  <div class="tripDetailHeading"><div><span class="detailEyebrow">YOUR TRAVEL JOURNAL</span><h2 id="activeTripTitle">경주 여행</h2><p id="activeTripDates">2026.11.21 - 2026.11.22</p></div><button class="btn ghost" onclick="showDashboard()">여행 목록으로</button></div>
   <section class="tripCountdownSection" aria-label="여행 카운트다운">
     <span class="countdownLabel">OUR TRIP BEGINS IN</span>
     <div class="countdownUnits">
@@ -192,6 +193,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div class="supplyListHead"><div><h3>준비물 체크리스트</h3><div class="supplyActor"><label for="supplyActor">체크하는 사람</label><select id="supplyActor"><option>시연</option><option>민경</option><option>다인</option><option>윤진</option></select></div></div><div class="supplyFilters"><button class="supplyFilter active" data-supply-filter="all">전체</button><button class="supplyFilter" data-supply-filter="todo">미완료</button><button class="supplyFilter" data-supply-filter="done">완료</button></div></div>
     <div id="supplyList" class="supplyList"></div><div class="supplyActivity card"><div class="supplyActivityHead"><h3>최근 준비 현황</h3><span>친구들의 체크 기록</span></div><div id="supplyActivityList"></div></div>
   </section>
+  </div>
 </div>
 
 <div class="modalBack" id="addTripModal"><div class="modal"><div class="modalTop"><h3>새로운 여행 추가</h3><button class="close" onclick="closeModal('addTripModal')">×</button></div><div class="formGrid"><div class="field full"><label>여행 이름 *</label><input id="newTripName" placeholder="예: 제주도 여행"></div><div class="field"><label>여행 시작일 *</label><input id="newTripStart" type="date"></div><div class="field"><label>여행 종료일 *</label><input id="newTripEnd" type="date"></div><div class="field full"><label>대표 이미지 URL</label><input id="newTripCover" type="url" placeholder="이미지 주소를 붙여넣어 주세요."></div><div class="field full"><label>공동 지도 링크 (선택)</label><input id="newTripMap" type="url" placeholder="Google Maps 공동 목록 링크"></div></div><div class="setupNote">여행을 추가하면 별도의 일정, 가고 싶은 곳, 경비, 준비물 목록이 만들어져요.</div><div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="createTrip()">여행 만들기</button><button class="btn ghost" onclick="closeModal('addTripModal')">취소</button></div></div></div>
