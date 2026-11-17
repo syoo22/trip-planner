@@ -380,9 +380,9 @@ async function connectServices(){
   if(unsubscribe)unsubscribe();
   unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),async snap=>{
    latestTripSnapshot=snap;
-   const meta=[];const presenceDocs=[];
-   snap.forEach(d=>{const v=d.data();if(v.kind==='trip')meta.push({...v,docId:d.id});if(v.kind==='presence')presenceDocs.push(v)});
-   if(!meta.some(t=>t.id===DEFAULT_TRIP_ID)){
+   const meta=[];const presenceDocs=[];let defaultTripDeleted=false;
+   snap.forEach(d=>{const v=d.data();if(v.kind==='trip')meta.push({...v,docId:d.id});if(v.kind==='presence')presenceDocs.push(v);if(v.kind==='tripDeleted'&&v.id===DEFAULT_TRIP_ID)defaultTripDeleted=true});
+   if(!meta.some(t=>t.id===DEFAULT_TRIP_ID)&&!defaultTripDeleted){
     const legacy={id:DEFAULT_TRIP_ID,kind:'trip',name:'경주 여행',location:'경주',startDate:'2026-11-21',endDate:'2026-11-22',cover:'https://upload.wikimedia.org/wikipedia/commons/d/db/Leaning_trees_over_the_grassy_hillock_of_Nodong-ri_tombs_clouds_and_blue_sky_in_Gyeongju_South_Korea.jpg',mapUrl:'https://maps.app.goo.gl/AkaM9b4B2U3D7UmPA',createdAt:Date.now()};
     await setDoc(doc(db,'gyeongjuTrip','trip_'+DEFAULT_TRIP_ID),legacy);meta.push(legacy);
    }
@@ -472,6 +472,7 @@ window.deleteTrip=async id=>{
    latestTripSnapshot.forEach(d=>{const v=d.data();if((v.kind==='trip'&&v.id===id)||(['place','plan','expense','wishlist','supply'].includes(v.kind)&&(v.tripId||DEFAULT_TRIP_ID)===id))removals.push(deleteDoc(doc(db,'gyeongjuTrip',d.id)))});
    if(!removals.some(Boolean)&&id!==DEFAULT_TRIP_ID)removals.push(deleteDoc(doc(db,'gyeongjuTrip','trip_'+id)));
    await Promise.all(removals);
+   if(id===DEFAULT_TRIP_ID)await setDoc(doc(db,'gyeongjuTrip','trip_deleted_'+id),{kind:'tripDeleted',id,deletedAt:Date.now()});
   }
   trips=trips.filter(x=>x.id!==id);
   if(activeTripId===id){activeTripId=trips[0]?.id||DEFAULT_TRIP_ID;localStorage.setItem('active-trip-id',activeTripId);state={places:[],plans:[],expenses:[],wishlist:[],supplies:[]};localStorage.setItem(STORE,JSON.stringify(state));previousSupplySnapshot=null}
