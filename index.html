@@ -113,6 +113,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   min-width:0;
 }
 .albumUploadCard{padding:18px;margin-bottom:22px}.albumUploadIntro{display:flex;flex-direction:column;gap:5px;margin-bottom:14px}.albumUploadIntro strong{font-size:15px}.albumUploadIntro span,.albumUploadHint{font-size:11px;color:var(--muted);line-height:1.6}.albumUploadButton{width:100%;padding:13px}.albumUploadHint{text-align:center;margin-top:9px}.albumSummary,.albumDateHead{display:flex;align-items:center;justify-content:space-between;gap:10px}.albumSummary{margin:0 2px 14px}.albumSummary h3{font-size:17px;margin:0}.albumSummary span,.albumDateHead span{font-size:11px;color:var(--muted)}.albumGallery{display:flex;flex-direction:column;gap:22px}.albumDateGroup{display:flex;flex-direction:column;gap:10px}.albumDateHead{padding:0 2px}.albumDateHead strong{font-size:13px;color:var(--green)}.albumGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:9px}.albumPhotoCard{min-width:0;overflow:hidden;border-radius:13px;background:#fff;border:1px solid var(--line)}.albumPhotoCard img{display:block;width:100%;aspect-ratio:1/1;object-fit:cover}.albumPhotoMeta{display:flex;align-items:center;justify-content:space-between;gap:4px;padding:7px 8px}.albumPhotoMeta span{font-size:10px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.albumDelete{font-size:10px;color:#a65b4e;background:#f8efec;border-radius:7px;padding:5px 7px;flex-shrink:0}.albumEmpty{padding:30px 18px;display:flex;flex-direction:column;gap:7px;text-align:center}.albumEmpty strong{font-size:14px}.albumEmpty span{font-size:11px;color:var(--muted)}@media(max-width:520px){.albumGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.albumMemoField{margin:0 0 12px}.albumMemoField textarea{width:100%;box-sizing:border-box;resize:vertical;min-height:68px;font-size:13px}.albumPhotoMemoText{margin:0;padding:0 9px 10px;font-size:11px;line-height:1.5;color:var(--muted);overflow-wrap:anywhere}
 </style>
 </head>
 <body>
@@ -218,6 +219,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
     <div class="sectionHead"><div><h2>우리의 여행 앨범</h2><p>함께 찍은 사진을 올리면 날짜별로 자동 정리돼요.</p></div></div>
     <div class="card albumUploadCard">
       <div class="albumUploadIntro"><strong>여행 사진 모으기</strong><span>여러 장을 한 번에 추가할 수 있어요. 사진은 이 여행에 함께 공유돼요.</span></div>
+      <div class="field albumMemoField"><label for="albumPhotoMemo">사진 메모 (선택)</label><textarea id="albumPhotoMemo" rows="2" placeholder="예: 첫날 대릉원에서 찍은 사진, 날씨가 정말 좋았던 날"></textarea></div>
       <input id="albumPhotoInput" type="file" accept="image/*" multiple hidden>
       <button class="btn albumUploadButton" type="button" onclick="document.getElementById('albumPhotoInput').click()">＋ 사진 추가하기</button>
       <div class="albumUploadHint">사진은 자동으로 날짜별 앨범에 모여요.</div>
@@ -318,7 +320,7 @@ function renderAlbum(){
  $('albumPhotoCount').textContent=photos.length+'장';
  const groups=new Map();
  photos.forEach(photo=>{const date=new Date(photo.createdAt||Date.now());const key=date.getFullYear()+'. '+String(date.getMonth()+1).padStart(2,'0')+'. '+String(date.getDate()).padStart(2,'0')+'.';if(!groups.has(key))groups.set(key,[]);groups.get(key).push(photo)});
- $('albumGallery').innerHTML=photos.length?[...groups.entries()].map(([date,items])=>'<section class="albumDateGroup"><div class="albumDateHead"><strong>'+esc(date)+'</strong><span>'+items.length+'장</span></div><div class="albumGrid">'+items.map(photo=>'<article class="albumPhotoCard"><img src="'+photo.image+'" alt="여행 사진" loading="lazy"><div class="albumPhotoMeta"><span>'+esc(photo.by||'함께한 사진')+'</span><button type="button" class="albumDelete" onclick="deleteAlbumPhoto(\''+photo.id+'\')">삭제</button></div></article>').join('')+'</div></section>').join(''):'<div class="card albumEmpty"><strong>아직 사진이 없어요.</strong><span>여행 중 찍은 사진을 추가해 첫 페이지를 만들어 보세요.</span></div>';
+ $('albumGallery').innerHTML=photos.length?[...groups.entries()].map(([date,items])=>'<section class="albumDateGroup"><div class="albumDateHead"><strong>'+esc(date)+'</strong><span>'+items.length+'장</span></div><div class="albumGrid">'+items.map(photo=>'<article class="albumPhotoCard"><img src="'+photo.image+'" alt="여행 사진" loading="lazy"><div class="albumPhotoMeta"><span>'+esc(photo.by||'함께한 사진')+'</span><button type="button" class="albumDelete" onclick="deleteAlbumPhoto(\''+photo.id+'\')">삭제</button></div>'+(photo.memo?'<p class="albumPhotoMemoText">'+esc(photo.memo)+'</p>':'')+'</article>').join('')+'</div></section>').join(''):'<div class="card albumEmpty"><strong>아직 사진이 없어요.</strong><span>여행 중 찍은 사진을 추가해 첫 페이지를 만들어 보세요.</span></div>';
 }
 async function compressAlbumPhoto(file){
  const raw=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=reject;reader.readAsDataURL(file)});
@@ -329,9 +331,9 @@ window.addAlbumPhotos=async files=>{
  const selected=[...files].filter(file=>file.type.startsWith('image/'));if(!selected.length)return;
  if(selected.length>12){toast('한 번에 최대 12장까지 추가할 수 있어요.');return}
  const input=$('albumPhotoInput');input.disabled=true;
- try{for(const file of selected){const image=await compressAlbumPhoto(file);const photo={id:'album_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),image,by:memberDirectory.find(m=>m.email===auth?.currentUser?.email)?.name||'함께한 사진',createdAt:Date.now()};state.album.push(photo)}persist();toast(selected.length+'장의 사진을 앨범에 추가했어요.')}
+ try{for(const file of selected){const image=await compressAlbumPhoto(file);const photo={id:'album_'+Date.now().toString(36)+'_'+Math.random().toString(36).slice(2,8),image,memo:$('albumPhotoMemo').value.trim(),by:memberDirectory.find(m=>m.email===auth?.currentUser?.email)?.name||'함께한 사진',createdAt:Date.now()};state.album.push(photo)}persist();toast(selected.length+'장의 사진을 앨범에 추가했어요.')}
  catch(error){console.error('Album upload failed:',error);toast(error?.message||'사진을 추가하지 못했어요. 다시 시도해 주세요.')}
- finally{input.disabled=false;input.value=''}
+ finally{input.disabled=false;input.value='';$('albumPhotoMemo').value=''}
 };
 window.deleteAlbumPhoto=id=>{if(!confirm('이 사진을 앨범에서 삭제할까요?'))return;state.album=state.album.filter(photo=>photo.id!==id);persist();toast('사진을 삭제했어요.')};
 $('albumPhotoInput').addEventListener('change',event=>addAlbumPhotos(event.target.files));
