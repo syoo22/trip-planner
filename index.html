@@ -233,7 +233,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .bingoCell.empty .bingoMission{font-weight:500;color:#a2aaa1}
 .bingoHint{text-align:center;color:var(--muted);font-size:10px;margin:10px 0 0}
 @media(max-width:650px){.nav{grid-template-columns:repeat(6,minmax(0,1fr))}.bingoBoard{gap:5px}.bingoCell{border-radius:9px;padding:5px 2px;gap:3px}.bingoCell .bingoMission{font-size:9px}.bingoCell .bingoCreator,.bingoCell .bingoCompleter{font-size:7px}.bingoCell.done:after{border-width:2px}}
-</style>
+.bingoCell.bingoLineWin{animation:bingoCellGlow .85s ease-in-out 2;z-index:2}@keyframes bingoCellGlow{0%,100%{box-shadow:0 0 0 rgba(83,132,91,0);background:#e9f1e9}50%{box-shadow:0 0 0 5px rgba(83,132,91,.22);background:#d5e8d7}}.bingoCelebrate{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:rgba(20,35,26,.36);backdrop-filter:blur(3px);animation:bingoOverlayIn .25s ease}.bingoCelebrateCard{width:min(86vw,360px);padding:35px 24px 30px;border:1px solid #ffffffb3;border-radius:25px;background:#fbfcf8;text-align:center;box-shadow:0 20px 70px #10231740;animation:bingoPop .45s cubic-bezier(.2,.9,.2,1.2)}.bingoCelebrateEyebrow{font-size:10px;letter-spacing:.22em;color:#819181;font-weight:800}.bingoCelebrateTitle{font-family:Georgia,serif;font-size:54px;color:#365c49;font-weight:800;margin:12px 0 5px}.bingoCelebrateText{font-size:14px;color:#526453;font-weight:650}.bingoCelebrateBy{font-size:11px;color:#8b9689;margin-top:9px}.bingoCelebrateClose{margin-top:20px;padding:10px 22px;border-radius:999px;background:#365c49;color:#fff;font-size:12px;font-weight:700}.bingoConfetti{position:absolute;top:-18px;width:8px;height:14px;border-radius:2px;animation:bingoFall 1.8s ease-in forwards;pointer-events:none}@keyframes bingoOverlayIn{from{opacity:0}to{opacity:1}}@keyframes bingoPop{0%{transform:scale(.75) translateY(15px);opacity:0}100%{transform:scale(1) translateY(0);opacity:1}}@keyframes bingoFall{to{transform:translateY(115vh) rotate(620deg);opacity:0}}</style>
 </head>
 <body>
 <div class="tripGate" id="tripGate">
@@ -420,10 +420,11 @@ const $=id=>document.getElementById(id);
 const STORE='gyeongju-trip-v1', SETTINGS='gyeongju-settings-v1';
 const DEFAULT_TRIP_ID='gyeongju-2026';
 let activeTripId=localStorage.getItem('active-trip-id')||DEFAULT_TRIP_ID;
+let seenBingoWinIds=null;
 let trips=[];let latestTripSnapshot=null;
 let state=JSON.parse(localStorage.getItem(STORE)||'{"places":[],"plans":[],"expenses":[],"wishlist":[],"supplies":[]}');
 state.wishlist=state.wishlist||[];state.supplies=state.supplies||[];
-state.album=state.album||[];state.bingo=state.bingo||[];
+state.album=state.album||[];state.bingo=state.bingo||[];state.bingoWins=state.bingoWins||[];
 const defaultFirebaseConfig={apiKey:"AIzaSyC32X1Ug1ySiCDtILBZI6mSzzmr7w2c0g4",authDomain:"trip-planner-9d568.firebaseapp.com",projectId:"trip-planner-9d568",storageBucket:"trip-planner-9d568.firebasestorage.app",messagingSenderId:"843026205449",appId:"1:843026205449:web:938f3dbc7bcde76c9061d8"};
 let settings=JSON.parse(localStorage.getItem(SETTINGS)||'{}');
 if(!settings.firebaseConfig){settings.firebaseConfig=JSON.stringify(defaultFirebaseConfig);localStorage.setItem(SETTINGS,JSON.stringify(settings));}
@@ -433,7 +434,7 @@ const colors={'시연':'#557b62','민경':'#c17b58','다인':'#7886a5','윤진':
 const money=n=>'₩'+Number(n||0).toLocaleString('ko-KR');
 function persist(){localStorage.setItem(STORE,JSON.stringify(state));render();if(db)syncAll();}
 
-function renderBingo(){
+const bingoLines=Array.from({length:5},(_,r)=>Array.from({length:5},(_,col)=>r*5+col)).concat(Array.from({length:5},(_,col)=>Array.from({length:5},(_,r)=>r*5+col)),[[0,6,12,18,24],[4,8,12,16,20]]);function completedBingoLines(items){const sorted=(items||[]).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));return bingoLines.map((cells,index)=>({index,cells})).filter(line=>line.cells.every(i=>sorted[i]&&sorted[i].done))}let bingoCelebrationTimer=null;function celebrateBingo(win,remote){const board=$('bingoBoard');if(board)board.querySelectorAll('.bingoCell').forEach((cell,i)=>{if(win.cells.includes(i))cell.classList.add('bingoLineWin')});const overlay=document.createElement('div');overlay.className='bingoCelebrate';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');const card=document.createElement('div');card.className='bingoCelebrateCard';card.innerHTML='<div class="bingoCelebrateEyebrow">OUR TRAVEL CHALLENGE</div><div class="bingoCelebrateTitle">BINGO!</div><div class="bingoCelebrateText">우리의 빙고가 완성됐어요!</div><div class="bingoCelebrateBy">'+esc(win.completedBy||'친구')+'님이 빙고를 완성했어요!</div><button class="bingoCelebrateClose" type="button">계속하기</button>';overlay.appendChild(card);document.body.appendChild(overlay);for(let i=0;i<34;i++){const bit=document.createElement('i');bit.className='bingoConfetti';bit.style.left=(Math.random()*100)+'%';bit.style.animationDelay=(Math.random()*.45)+'s';bit.style.background=['#6d9275','#d7b879','#b7cdb8','#d28d72','#8199a0'][i%5];overlay.appendChild(bit)}const close=()=>{overlay.remove();if(board)board.querySelectorAll('.bingoLineWin').forEach(x=>x.classList.remove('bingoLineWin'))};overlay.addEventListener('click',e=>{if(e.target===overlay)close()});card.querySelector('button').addEventListener('click',close);clearTimeout(bingoCelebrationTimer);bingoCelebrationTimer=setTimeout(()=>{if(overlay.isConnected)close()},6500)}function renderBingo(){
  const items=(state.bingo||[]).slice().sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
  const done=items.filter(x=>x.done).length;
  $('bingoProgress').textContent=done+' / 25 미션 완료';
@@ -452,12 +453,7 @@ window.addBingoMission=()=>{
  state.bingo.push({id:'bingo_'+crypto.randomUUID(),text:textValue,createdBy:getCurrentMemberName(),createdAt:Date.now(),done:false,completedBy:'',completedAt:null});
  input.value='';persist();renderBingo();toast('여행 미션을 추가했어요.');
 };
-window.toggleBingoMission=id=>{
- const item=(state.bingo||[]).find(x=>x.id===id);if(!item)return;
- if(item.done){item.done=false;item.completedBy='';item.completedAt=null;toast('미션 완료를 취소했어요.')}
- else{item.done=true;item.completedBy=getCurrentMemberName();item.completedAt=Date.now();toast(item.completedBy+'님이 미션을 완료했어요!')}
- persist();renderBingo();
-};
+window.toggleBingoMission=id=>{const before=completedBingoLines(state.bingo).map(x=>x.index);const item=(state.bingo||[]).find(x=>x.id===id);if(!item)return;if(item.done){item.done=false;item.completedBy='';item.completedAt=null;toast('미션 완료를 취소했어요.')}else{item.done=true;item.completedBy=getCurrentMemberName();item.completedAt=Date.now();toast(item.completedBy+'님이 미션을 완료했어요!')}const after=completedBingoLines(state.bingo);const fresh=after.filter(line=>!before.includes(line.index));if(fresh.length){state.bingoWins=state.bingoWins||[];fresh.forEach(line=>{const win={id:'bingoWin_'+crypto.randomUUID(),cells:line.cells,completedBy:getCurrentMemberName(),createdAt:Date.now()};state.bingoWins.push(win);if(seenBingoWinIds)seenBingoWinIds.add(win.id);celebrateBingo(win,false)})}persist();renderBingo()};
 $('bingoMissionInput').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addBingoMission()}});
 
 
@@ -736,19 +732,19 @@ async function connectServices(){
  }catch(e){console.error(e);$('connection').innerHTML='<i class="dot"></i>연결 오류';toast('Firebase 설정 JSON을 확인해 주세요.')}
 }
 function applyTripSnapshot(snap){
- const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[],bingo:[]};
+ const next={places:[],plans:[],expenses:[],wishlist:[],supplies:[],album:[],bingo:[],bingoWins:[]};
  const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
  snap.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
- snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted'||v.kind==='supplyDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto','bingo'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply'&&!deletedSupplyIds.has(v.id))next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data);if(v.kind==='bingo')next.bingo.push(v.data)});
+ snap.forEach(d=>{const v=d.data();if(v.kind==='presence'||v.kind==='trip'||v.kind==='albumPhotoDeleted'||v.kind==='supplyDeleted')return;if(!['place','plan','expense','wishlist','supply','albumPhoto','bingo','bingoWin'].includes(v.kind))return;if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='place')next.places.push(v.data);if(v.kind==='plan')next.plans.push(v.data);if(v.kind==='expense')next.expenses.push(v.data);if(v.kind==='wishlist')next.wishlist.push(v.data);if(v.kind==='supply'&&!deletedSupplyIds.has(v.id))next.supplies.push(v.data);if(v.kind==='albumPhoto'&&!deletedAlbumIds.has(v.id))next.album.push(v.data);if(v.kind==='bingo')next.bingo.push(v.data);if(v.kind==='bingoWin')next.bingoWins.push(v.data)});
  if(previousSupplySnapshot){next.supplies.forEach(item=>{const before=previousSupplySnapshot.get(item.id);if(before&&!before.done&&item.done&&!localSupplyChanges.has(item.id))toast((item.completedBy||item.by||'친구')+'님이 '+item.name+' 준비를 완료했어요.')})}
  localSupplyChanges.clear();previousSupplySnapshot=new Map(next.supplies.map(x=>[x.id,{done:x.done}]));
- state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
+ const incomingWins=next.bingoWins||[];if(seenBingoWinIds===null)seenBingoWinIds=new Set(incomingWins.map(x=>x.id));else{const freshWins=incomingWins.filter(x=>!seenBingoWinIds.has(x.id));freshWins.forEach(x=>seenBingoWinIds.add(x.id));freshWins.forEach(x=>celebrateBingo(x,true))}state=next;localStorage.setItem(STORE,JSON.stringify(state));render();renderTripDashboard();if(currentView==='detail')showWorkspace();else showDashboard();
 }
 async function syncAll(){
  if(!db)return;
  const deletedAlbumIds=new Set(),deletedSupplyIds=new Set();
  if(latestTripSnapshot)latestTripSnapshot.forEach(d=>{const v=d.data();if((v.tripId||DEFAULT_TRIP_ID)!==activeTripId)return;if(v.kind==='albumPhotoDeleted')deletedAlbumIds.add(v.photoId||v.id);if(v.kind==='supplyDeleted')deletedSupplyIds.add(v.supplyId||v.id)});
- const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.filter(data=>!deletedSupplyIds.has(data.id)).map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data})),...state.bingo.map(data=>({id:data.id,kind:'bingo',data}))];
+ const items=[...state.places.map(data=>({id:data.id,kind:'place',data})),...state.plans.map(data=>({id:data.id,kind:'plan',data})),...state.expenses.map(data=>({id:data.id,kind:'expense',data})),...state.wishlist.map(data=>({id:data.id,kind:'wishlist',data})),...state.supplies.filter(data=>!deletedSupplyIds.has(data.id)).map(data=>({id:data.id,kind:'supply',data})),...state.album.filter(data=>!deletedAlbumIds.has(data.id)).map(data=>({id:data.id,kind:'albumPhoto',data})),...state.bingo.map(data=>({id:data.id,kind:'bingo',data})),...(state.bingoWins||[]).map(data=>({id:data.id,kind:'bingoWin',data}))];
  try{for(const item of items)await setDoc(doc(db,'gyeongjuTrip',item.id),{...item,tripId:activeTripId})}catch(e){console.error(e);toast('공유 저장에 실패했어요. Firestore 규칙을 확인해 주세요.')}
 }
 window.initTripMap=()=>{if(!window.L)return;map=L.map('leafletMap',{scrollWheelZoom:false}).setView([35.8562,129.2247],13);L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19,attribution:'&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">OpenStreetMap contributors</a>'}).addTo(map);updateMarkers()};
