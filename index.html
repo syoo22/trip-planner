@@ -457,7 +457,32 @@ window.deleteSupply=async id=>{
   toast('준비물을 삭제하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.');
  }
 };
-window.renderSupplies=()=>{let total=state.supplies.length,done=state.supplies.filter(x=>x.done).length,pct=total?Math.round(done/total*100):0;$('supplyProgressText').textContent=done+' / '+total+'개';$('supplyProgressPct').textContent=pct+'%';$('supplyProgressBar').style.width=pct+'%';let list=state.supplies.filter(x=>supplyFilter==='all'||(supplyFilter==='done'?x.done:!x.done)).slice().sort((a,b)=>Number(a.done)-Number(b.done)||a.createdAt-b.createdAt);$('supplyList').innerHTML=list.map(x=>{let row=document.createElement('div');row.className='supplyItem '+(x.done?'isDone':'');let label=document.createElement('label');label.className='supplyCheck';let check=document.createElement('input');check.type='checkbox';check.checked=!!x.done;check.onchange=()=>toggleSupply(x.id);let custom=document.createElement('span');custom.className='supplyCustomCheck';label.append(check,custom);let info=document.createElement('div');info.className='supplyItemInfo';let title=document.createElement('strong');title.textContent=x.name;let meta=document.createElement('small');meta.textContent=x.category+' · '+(x.by==='공동'?'함께 준비':x.by+' 담당')+(x.done&&x.completedBy?' · '+x.completedBy+' 완료':'');info.append(title,meta);let del=document.createElement('button');del.className='supplyDelete';del.textContent='삭제';del.onclick=()=>deleteSupply(x.id);row.append(label,info,del);return row.outerHTML}).join('')||'<div class="card empty">아직 준비물이 없어요. 필요한 물건을 하나씩 추가해 보세요.</div>';let activity=state.supplies.filter(x=>x.done&&x.completedAt).sort((a,b)=>b.completedAt-a.completedAt).slice(0,6);$('supplyActivityList').innerHTML=activity.map(x=>'<div class="supplyActivityItem"><span class="supplyActivityIcon">✓</span><div><strong>'+esc(x.completedBy||x.by||'친구')+'</strong>님이 <b>'+esc(x.name)+'</b> 준비를 완료했어요.<small>'+new Date(x.completedAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'</small></div></div>').join('')||'<div class="supplyActivityEmpty">아직 완료된 준비물이 없어요.</div>'};
+window.renderSupplies=()=>{
+ let total=state.supplies.length,done=state.supplies.filter(x=>x.done).length,pct=total?Math.round(done/total*100):0;
+ $('supplyProgressText').textContent=done+' / '+total+'개';
+ $('supplyProgressPct').textContent=pct+'%';
+ $('supplyProgressBar').style.width=pct+'%';
+ let list=state.supplies.filter(x=>supplyFilter==='all'||(supplyFilter==='done'?x.done:!x.done)).slice().sort((a,b)=>Number(a.done)-Number(b.done)||a.createdAt-b.createdAt);
+ const container=$('supplyList');container.replaceChildren();
+ if(!list.length){
+  const empty=document.createElement('div');empty.className='card empty';empty.textContent='아직 준비물이 없어요. 필요한 물건을 하나씩 추가해 보세요.';container.append(empty);
+ }else{
+  list.forEach(x=>{
+   const row=document.createElement('div');row.className='supplyItem '+(x.done?'isDone':'');
+   const label=document.createElement('label');label.className='supplyCheck';
+   const check=document.createElement('input');check.type='checkbox';check.checked=!!x.done;check.onchange=()=>toggleSupply(x.id);
+   const custom=document.createElement('span');custom.className='supplyCustomCheck';label.append(check,custom);
+   const info=document.createElement('div');info.className='supplyItemInfo';
+   const title=document.createElement('strong');title.textContent=x.name;
+   const meta=document.createElement('small');meta.textContent=x.category+' / '+(x.by==='공동'?'함께 준비':x.by+' 담당')+(x.done&&x.completedBy?' / '+x.completedBy+' 완료':'');
+   info.append(title,meta);
+   const del=document.createElement('button');del.type='button';del.className='supplyDelete';del.textContent='삭제';del.addEventListener('click',()=>window.deleteSupply(x.id));
+   row.append(label,info,del);container.append(row);
+  });
+ }
+ let activity=state.supplies.filter(x=>x.done&&x.completedAt).sort((a,b)=>b.completedAt-a.completedAt).slice(0,6);
+ $('supplyActivityList').innerHTML=activity.map(x=>'<div class="supplyActivityItem"><span class="supplyActivityIcon">✓</span><div><strong>'+esc(x.completedBy||x.by||'친구')+'</strong>님이 <b>'+esc(x.name)+'</b> 준비를 완료했어요.<small>'+new Date(x.completedAt).toLocaleString('ko-KR',{month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false})+'</small></div></div>').join('')||'<div class="supplyActivityEmpty">아직 완료된 준비물이 없어요.</div>';
+};
 window.setSupplyFilter=f=>{supplyFilter=f;document.querySelectorAll('.supplyFilter').forEach(b=>b.classList.toggle('active',b.dataset.supplyFilter===f));renderSupplies()};
 document.querySelectorAll('.supplyFilter').forEach(b=>b.addEventListener('click',()=>setSupplyFilter(b.dataset.supplyFilter)));
 window.addWish=()=>{const name=$('wishName').value.trim();if(!name)return toast('장소명을 입력해 주세요.');if(editingWishId){const p=state.wishlist.find(x=>x.id===editingWishId);if(!p)return; p.name=name;p.category=$('wishCategory').value;p.by=$('wishBy').value;cancelWishEdit();persist();toast('장소 정보를 수정했어요.')}else{state.wishlist.push({id:crypto.randomUUID(),name,category:$('wishCategory').value,by:$('wishBy').value,createdAt:Date.now(),likes:[]});$('wishName').value='';persist();toast('가고 싶은 장소를 추가했어요.')}};
