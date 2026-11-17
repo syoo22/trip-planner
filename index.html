@@ -136,6 +136,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  55%{transform:perspective(180px) rotateX(-12deg);opacity:1}
  100%{transform:perspective(180px) rotateX(0);opacity:1}
 }
+.supplyItemActions{display:flex;align-items:center;gap:5px;flex-shrink:0}.supplyEdit{background:#eef2ec;color:var(--green);border-radius:8px;padding:6px 8px;font-size:10px}.supplyAddedBy{font-size:9px!important;color:#98a197!important;margin-top:1px}.supplyItemActions button{white-space:nowrap}@media(max-width:380px){.supplyItem{gap:8px;padding:11px}.supplyItemActions{gap:4px}.supplyItemActions button{padding:6px;font-size:9px}}
 </style>
 </head>
 <body>
@@ -440,7 +441,13 @@ function reorderPlan(id,targetId,day,targetRow,y){if(id===targetId)return;let fr
 window.savePlan=()=>{let name=$('planName').value.trim();if(!name)return toast('일정명을 입력해 주세요.');let isEdit=!!editingPlanId;let data={day:$('planDay').value,time:$('planTime').value,name,by:$('planBy').value,category:$('planCategory').value,note:$('planNote').value.trim()};if(isEdit){let p=state.plans.find(x=>x.id===editingPlanId);if(!p)return;Object.assign(p,data)}else state.plans.push({id:crypto.randomUUID(),...data});state.plans.sort((a,b)=>a.day.localeCompare(b.day)||a.time.localeCompare(b.time));persist();closeModal('planModal');editingPlanId=null;$('planName').value='';$('planNote').value='';$('planBy').value='시연';toast(isEdit?'일정을 수정했어요.':'일정을 저장했어요.')};
 window.saveExpense=()=>{let name=$('eName').value.trim(),amount=Number($('eAmount').value),date=$('eDate').value;if(!name||!amount||amount<1||!date)return toast('날짜, 항목, 금액을 모두 입력해 주세요.');state.expenses.push({id:crypto.randomUUID(),name,amount,by:$('eBy').value,category:$('eCategory').value,date});persist();$('eName').value='';$('eAmount').value='';$('eDate').value=date;toast('결제 내역을 추가했어요. 정산 금액을 업데이트했어요.')};
 
-window.addSupply=()=>{let name=$('supplyName').value.trim();if(!name)return toast('준비물 이름을 입력해 주세요.');state.supplies.push({id:crypto.randomUUID(),name:name,category:$('supplyCategory').value,by:$('supplyBy').value,done:false,createdAt:Date.now()});$('supplyName').value='';persist();toast('준비물을 추가했어요.')};
+window.addSupply=()=>{
+ let name=$('supplyName').value.trim();if(!name)return toast('준비물 이름을 입력해 주세요.');
+ const email=auth?.currentUser?.email||'';
+ const addedBy=memberDirectory.find(m=>m.email.toLowerCase()===email.toLowerCase())?.name||'친구';
+ state.supplies.push({id:crypto.randomUUID(),name,category:$('supplyCategory').value,by:$('supplyBy').value,addedBy,createdAt:Date.now(),done:false});
+ $('supplyName').value='';persist();toast('준비물을 추가했어요.');
+};
 window.toggleSupply=id=>{let p=state.supplies.find(x=>x.id===id);if(!p)return;p.done=!p.done;if(p.done){p.completedBy=$('supplyActor').value;p.completedAt=Date.now();localSupplyChanges.add(id);toast(p.completedBy+'님이 '+p.name+' 준비를 완료했어요.')}else{p.completedBy='';p.completedAt=null;localSupplyChanges.add(id);toast('완료 체크를 취소했어요.')}persist()};
 window.deleteSupply=async id=>{
  if(!confirm('이 준비물을 삭제할까요?'))return;
@@ -457,6 +464,20 @@ window.deleteSupply=async id=>{
   toast('준비물을 삭제하지 못했어요. 연결 상태를 확인한 뒤 다시 시도해 주세요.');
  }
 };
+window.editSupply=id=>{
+ const item=state.supplies.find(x=>x.id===id);if(!item)return;
+ const name=prompt('준비물 이름을 수정해 주세요.',item.name||'');if(name===null)return;
+ const cleanName=name.trim();if(!cleanName)return toast('준비물 이름을 입력해 주세요.');
+ const categories=['전자기기','의류','세면도구','개인용품','상비약','필수 서류','기타'];
+ const categoryText=prompt('분류를 입력해 주세요.\n'+categories.join(' / '),item.category||'기타');if(categoryText===null)return;
+ const category=categories.find(x=>x===categoryText.trim());if(!category)return toast('목록에 있는 분류 중 하나를 입력해 주세요.');
+ const owners=['공동','시연','민경','다인','윤진'];
+ const ownerText=prompt('담당자를 입력해 주세요.\n'+owners.join(' / '),item.by||'공동');if(ownerText===null)return;
+ const owner=owners.find(x=>x===ownerText.trim());if(!owner)return toast('목록에 있는 담당자 중 하나를 입력해 주세요.');
+ item.name=cleanName;item.category=category;item.by=owner;
+ persist();toast('준비물을 수정했어요.');
+};
+
 window.renderSupplies=()=>{
  let total=state.supplies.length,done=state.supplies.filter(x=>x.done).length,pct=total?Math.round(done/total*100):0;
  $('supplyProgressText').textContent=done+' / '+total+'개';
@@ -476,8 +497,12 @@ window.renderSupplies=()=>{
    const title=document.createElement('strong');title.textContent=x.name;
    const meta=document.createElement('small');meta.textContent=x.category+' / '+(x.by==='공동'?'함께 준비':x.by+' 담당')+(x.done&&x.completedBy?' / '+x.completedBy+' 완료':'');
    info.append(title,meta);
+   const actions=document.createElement('div');actions.className='supplyItemActions';
+   const edit=document.createElement('button');edit.type='button';edit.className='supplyEdit';edit.textContent='수정';edit.addEventListener('click',()=>window.editSupply(x.id));
    const del=document.createElement('button');del.type='button';del.className='supplyDelete';del.textContent='삭제';del.addEventListener('click',()=>window.deleteSupply(x.id));
-   row.append(label,info,del);container.append(row);
+   actions.append(edit,del);
+   if(x.addedBy){const added=document.createElement('small');added.className='supplyAddedBy';added.textContent='등록 '+x.addedBy;info.append(added);}
+   row.append(label,info,actions);container.append(row);
   });
  }
  let activity=state.supplies.filter(x=>x.done&&x.completedAt).sort((a,b)=>b.completedAt-a.completedAt).slice(0,6);
