@@ -274,6 +274,34 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .rouletteSpinButton:disabled{opacity:.65;cursor:wait}
 @media(max-width:420px){.rouletteWheel{width:min(82vw,340px)}.rouletteLabel{font-size:10px;width:32%}}
 @media(max-width:650px){.rouletteList{grid-template-columns:1fr}.rouletteCreate{padding:14px}}
+
+/* Floating shared group chat */
+.chatLauncher{position:fixed;right:22px;bottom:22px;z-index:1200;width:60px;height:60px;border-radius:50%;background:#365c49;color:#fff;box-shadow:0 8px 28px #1d352944;display:flex;align-items:center;justify-content:center;font-size:23px}
+.chatLauncher:active{transform:scale(.96)}
+.chatUnread{position:absolute;right:-2px;top:-3px;min-width:21px;height:21px;padding:0 5px;border-radius:99px;background:#c66b55;color:#fff;border:2px solid #fff;font-size:10px;font-weight:800;display:none;align-items:center;justify-content:center}
+.chatWindow{position:fixed;right:22px;bottom:94px;z-index:1201;width:min(380px,calc(100vw - 28px));height:min(570px,calc(100dvh - 125px));background:#fff;border:1px solid #e5e9e2;border-radius:22px;box-shadow:0 18px 55px #1c302b30;display:none;overflow:hidden;flex-direction:column}
+.chatWindow.open{display:flex}
+.chatHeader{background:#263e32;color:#fff;padding:16px 17px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.chatHeaderTitle{font-size:15px;font-weight:800;letter-spacing:.02em}
+.chatHeaderSub{font-size:10px;color:#c6d7c8;margin-top:4px}
+.chatClose{width:32px;height:32px;border-radius:50%;background:#ffffff20;color:#fff;font-size:20px}
+.chatMessages{flex:1;overflow:auto;padding:15px 13px;background:#f7f8f5;display:flex;flex-direction:column;gap:11px;overscroll-behavior:contain}
+.chatDateDivider{text-align:center;color:#899189;font-size:10px;margin:5px 0}
+.chatMessage{max-width:82%;display:flex;flex-direction:column;gap:4px;align-self:flex-start}
+.chatMessage.mine{align-self:flex-end;align-items:flex-end}
+.chatSender{font-size:10px;color:#788078;font-weight:750;padding:0 3px}
+.chatBubble{background:#fff;border:1px solid #e8ebe5;border-radius:4px 15px 15px 15px;padding:10px 12px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:#263128}
+.chatMessage.mine .chatBubble{background:#dce9dc;border-color:#dce9dc;border-radius:15px 4px 15px 15px}
+.chatMeta{font-size:9px;color:#9aa29a;padding:0 3px}
+.chatEmpty{margin:auto;text-align:center;color:#899189;font-size:12px;line-height:1.7}
+.chatComposer{display:flex;align-items:flex-end;gap:8px;padding:11px;border-top:1px solid #e8ebe5;background:#fff;flex-shrink:0}
+.chatInput{flex:1;min-width:0;resize:none;max-height:100px;border:1px solid #e5e9e2;border-radius:14px;padding:11px 12px;font:13px inherit;outline:none;background:#f9faf8}
+.chatInput:focus{border-color:#9db8a4}
+.chatSend{width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#365c49;color:#fff;font-size:17px}
+.chatSend:disabled{opacity:.45}
+.chatStatus{font-size:9px;color:#9aa29a;padding:0 14px 7px;background:#fff}
+@media(max-width:520px){.chatLauncher{right:16px;bottom:17px;width:56px;height:56px}.chatWindow{right:10px;bottom:82px;width:calc(100vw - 20px);height:min(72dvh,590px);border-radius:19px}}
+
 </style>
 </head>
 <body>
@@ -464,12 +492,30 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
   <div class="setupNote"><b>무료 지도 및 실시간 공유 설정</b><br>지도는 OpenStreetMap과 Leaflet을 사용하며 Google Maps API 키나 결제 계정이 필요하지 않습니다. 장소 검색은 OpenStreetMap의 공개 검색 서비스를 사용하며 자동완성 없이 직접 검색할 때만 요청합니다.<br><br>친구들과 실시간으로 공유하려면 Firebase 프로젝트의 Firestore Database를 만들고, Firebase 웹 앱 설정 JSON을 아래에 붙여넣으세요. Firebase는 결제 계정을 연결하지 않은 Spark 무료 요금제로만 사용하세요. Firestore 보안 규칙도 설정해야 합니다.</div>
   <div style="display:flex;gap:8px;margin-top:16px"><button class="btn" style="flex:1" onclick="saveSettings()">설정 저장 및 연결</button><button class="btn ghost" onclick="closeModal('setupModal')">닫기</button></div>
 </div></div>
+
+<div class="chatWindow" id="chatWindow" role="dialog" aria-label="우리 단체 채팅" aria-modal="false">
+ <div class="chatHeader">
+  <div><div class="chatHeaderTitle">OUR GROUP CHAT</div><div class="chatHeaderSub">시연 · 민경 · 다인 · 윤진</div></div>
+  <button class="chatClose" id="chatClose" type="button" aria-label="채팅 닫기">×</button>
+ </div>
+ <div class="chatMessages" id="chatMessages" aria-live="polite"><div class="chatEmpty">대화를 불러오는 중이에요.</div></div>
+ <div class="chatStatus" id="chatStatus">네 명이 함께 사용하는 단체 채팅방</div>
+ <form class="chatComposer" id="chatForm">
+  <textarea class="chatInput" id="chatInput" rows="1" maxlength="1000" placeholder="메시지를 입력하세요" aria-label="메시지 입력"></textarea>
+  <button class="chatSend" id="chatSend" type="submit" aria-label="메시지 보내기">↑</button>
+ </form>
+</div>
+<button class="chatLauncher" id="chatLauncher" type="button" aria-label="단체 채팅 열기" aria-expanded="false">
+ <span aria-hidden="true">▤</span><span class="chatUnread" id="chatUnread">0</span>
+</button>
+
 <div class="toast" id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
 import { getFirestore, collection, doc, setDoc, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
 
 const $=id=>document.getElementById(id);
 const STORE='gyeongju-trip-v1', SETTINGS='gyeongju-settings-v1';
@@ -686,6 +732,77 @@ window.renderSupplies=()=>{
 window.setSupplyFilter=f=>{supplyFilter=f;document.querySelectorAll('.supplyFilter').forEach(b=>b.classList.toggle('active',b.dataset.supplyFilter===f));renderSupplies()};
 document.querySelectorAll('.supplyFilter').forEach(b=>b.addEventListener('click',()=>setSupplyFilter(b.dataset.supplyFilter)));
 window.addWish=()=>{const name=$('wishName').value.trim();if(!name)return toast('장소명을 입력해 주세요.');if(editingWishId){const p=state.wishlist.find(x=>x.id===editingWishId);if(!p)return; p.name=name;p.category=$('wishCategory').value;p.by=$('wishBy').value;cancelWishEdit();persist();toast('장소 정보를 수정했어요.')}else{state.wishlist.push({id:crypto.randomUUID(),name,category:$('wishCategory').value,by:$('wishBy').value,createdAt:Date.now(),likes:[]});$('wishName').value='';persist();toast('가고 싶은 장소를 추가했어요.')}};
+
+/* Shared group chat: stored separately from trip records so trip changes never affect messages. */
+let chatMessagesCache=[],chatIsOpen=false;
+function chatReadKey(){return 'trip-chat-last-read-v1-'+(auth?.currentUser?.uid||'guest')}
+function updateChatUnread(){
+ const lastRead=Number(localStorage.getItem(chatReadKey())||0);
+ const unread=chatMessagesCache.filter(m=>m.senderUid!==auth?.currentUser?.uid&&Number(m.createdAt||0)>lastRead).length;
+ const badge=$('chatUnread');
+ if(!badge)return;
+ badge.textContent=unread>99?'99+':String(unread);
+ badge.style.display=unread?'flex':'none';
+}
+function renderChatMessages(snap){
+ chatMessagesCache=[];
+ snap.forEach(d=>{const v=d.data();if(v.kind==='chatMessage'&&typeof v.text==='string')chatMessagesCache.push({...v,id:d.id})});
+ chatMessagesCache.sort((a,b)=>Number(a.createdAt||0)-Number(b.createdAt||0));
+ chatMessagesCache=chatMessagesCache.slice(-150);
+ const box=$('chatMessages');
+ if(!box)return;
+ if(!chatMessagesCache.length){box.innerHTML='<div class="chatEmpty">아직 대화가 없어요.<br>첫 메시지를 남겨보세요!</div>'}
+ else{
+  let previousDay='';
+  box.innerHTML=chatMessagesCache.map(m=>{
+   const date=new Date(Number(m.createdAt)||Date.now());
+   const day=date.toLocaleDateString('ko-KR',{year:'numeric',month:'long',day:'numeric'});
+   const time=date.toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit',hour12:true});
+   const mine=m.senderUid===auth?.currentUser?.uid;
+   const divider=day!==previousDay?'<div class="chatDateDivider">'+day+'</div>':'';
+   previousDay=day;
+   return divider+'<div class="chatMessage '+(mine?'mine':'')+'">'+(mine?'':'<div class="chatSender">'+esc(m.senderName||'친구')+'</div>')+'<div class="chatBubble">'+esc(m.text)+'</div><div class="chatMeta">'+(mine?'나 · ':'')+time+'</div></div>';
+  }).join('');
+ }
+ updateChatUnread();
+ if(chatIsOpen)box.scrollTop=box.scrollHeight;
+}
+function setChatOpen(open){
+ chatIsOpen=!!open;
+ $('chatWindow').classList.toggle('open',chatIsOpen);
+ $('chatLauncher').setAttribute('aria-expanded',String(chatIsOpen));
+ $('chatLauncher').setAttribute('aria-label',chatIsOpen?'단체 채팅 닫기':'단체 채팅 열기');
+ if(chatIsOpen){
+  localStorage.setItem(chatReadKey(),String(Date.now()));
+  updateChatUnread();
+  requestAnimationFrame(()=>{$('chatMessages').scrollTop=$('chatMessages').scrollHeight;$('chatInput').focus()});
+ }
+}
+$('chatLauncher').addEventListener('click',()=>setChatOpen(!chatIsOpen));
+$('chatClose').addEventListener('click',()=>setChatOpen(false));
+$('chatForm').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const input=$('chatInput'),textValue=input.value.trim(),button=$('chatSend');
+ if(!textValue)return;
+ if(!db||!auth?.currentUser){toast('채팅 서버에 연결되지 않았어요.');return}
+ button.disabled=true;
+ try{
+  const id='chat_'+Date.now()+'_'+crypto.randomUUID();
+  await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatMessage',id,text:textValue,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+  input.value='';
+  input.style.height='auto';
+  localStorage.setItem(chatReadKey(),String(Date.now()));
+  updateChatUnread();
+ }catch(error){console.error('Chat send failed',error);toast('메시지를 보내지 못했어요. 연결 상태를 확인해 주세요.')}
+ finally{button.disabled=false;input.focus()}
+});
+$('chatInput').addEventListener('input',()=>{
+ const input=$('chatInput');input.style.height='auto';input.style.height=Math.min(input.scrollHeight,100)+'px';
+});
+$('chatInput').addEventListener('keydown',event=>{
+ if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();$('chatForm').requestSubmit()}
+});
+
 function getCurrentMemberName(){const email=String(auth?.currentUser?.email||'').toLowerCase();return memberDirectory.find(m=>m.email.toLowerCase()===email)?.name||'시연'}
 window.toggleWishLike=id=>{const p=state.wishlist.find(x=>x.id===id);if(!p)return;const who=getCurrentMemberName();p.likes=p.likes||[];p.likes=p.likes.includes(who)?p.likes.filter(x=>x!==who):[...p.likes,who];persist()};
 let editingWishId=null;
@@ -761,6 +878,7 @@ async function connectServices(){
   if(unsubscribe)unsubscribe();
   unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),async snap=>{
    latestTripSnapshot=snap;
+    renderChatMessages(snap);
    const meta=[];const presenceDocs=[];let defaultTripDeleted=false;
    snap.forEach(d=>{const v=d.data();if(v.kind==='trip')meta.push({...v,docId:d.id});if(v.kind==='presence')presenceDocs.push(v);if(v.kind==='tripDeleted'&&v.id===DEFAULT_TRIP_ID)defaultTripDeleted=true});
    if(!meta.some(t=>t.id===DEFAULT_TRIP_ID)&&!defaultTripDeleted){
@@ -964,6 +1082,7 @@ async function startFirebaseAuth(){
     onlineMembers=onlineMembers.filter(p=>p.uid!==currentPresenceUid);renderPresence();
     if(unsubscribe){unsubscribe();unsubscribe=null}
     db=null;
+    chatMessagesCache=[];setChatOpen(false);renderChatMessages({forEach:()=>{}});
     document.querySelector('.app').style.display='none';
     $('tripGate').style.display='flex';
     $('connection').innerHTML='<i class="dot"></i>로그아웃 상태';
