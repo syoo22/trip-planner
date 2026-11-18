@@ -771,7 +771,7 @@ function renderChatMessages(snap){
    const mine=m.senderUid===auth?.currentUser?.uid;
    const divider=day!==previousDay?'<div class="chatDateDivider">'+day+'</div>':'';
    previousDay=day;
-   const isImage=m.kind==='chatImage';const bubble=isImage?'<div class="chatBubble chatImageBubble"><img src="'+esc(m.imageUrl)+'" alt="공유된 사진" loading="lazy"></div>':'<div class="chatBubble">'+esc(m.text)+'</div>';return divider+'<div class="chatMessage '+(mine?'mine':'')+'" data-message-id="'+esc(m.id)+'">'+(mine?'':'<div class="chatSender">'+esc(m.senderName||'친구')+'</div>')+bubble+'<div class="chatMeta">'+(mine?'나 · ':'')+time+(m.editedAt?' · 수정됨':'')+'</div>'+(mine?'<div class="chatMessageTools">'+(isImage?'':'<button type="button" data-chat-edit="'+esc(m.id)+'">수정</button>')+'<button type="button" class="chatDelete" data-chat-delete="'+esc(m.id)+'">삭제</button></div>':'')+'</div>';
+   const isImage=m.kind==='chatImage';const bubble=isImage?'<div class="chatBubble chatImageBubble"><img src="'+esc(m.imageUrl)+'" alt="공유된 사진" loading="lazy"></div>':'<div class="chatBubble">'+esc(m.text)+'</div>';return divider+'<div class="chatMessage '+(mine?'mine':'')+'" data-message-id="'+esc(m.id)+'">'+(mine?'':'<div class="chatSender">'+esc(m.senderName||'친구')+'</div>')+bubble+'<div class="chatMeta">'+(mine?'나 · ':'')+time+(m.editedAt?' · 수정됨':'')+'</div>'+(mine?'<div class="chatMessageTools">'+'<button type="button" data-chat-edit="'+esc(m.id)+'">수정</button><button type="button" class="chatDelete" data-chat-delete="'+esc(m.id)+'">삭제</button></div>':'')+'</div>';
   }).join('');
  }
  box.querySelectorAll('.chatMessage.mine .chatBubble').forEach(bubble=>{
@@ -787,6 +787,7 @@ function renderChatMessages(snap){
  box.querySelectorAll('[data-chat-edit]').forEach(button=>button.addEventListener('click',async()=>{
   const message=chatMessagesCache.find(x=>x.id===button.dataset.chatEdit);
   if(!message||message.senderUid!==auth?.currentUser?.uid)return;
+  if(message.kind==='chatImage'){$('chatImageInput').dataset.replaceMessageId=message.id;$('chatImageInput').click();return}
   const next=prompt('메시지를 수정해 주세요.',message.text);
   if(next===null)return;
   if(!next.trim())return toast('메시지를 입력해 주세요.');
@@ -868,16 +869,24 @@ async function compressChatImage(file){
 $('chatImageInput').addEventListener('change',async()=>{
  const file=$('chatImageInput').files?.[0];if(!file)return;
  if(!db||!storage||!auth?.currentUser){toast('사진 업로드를 위해 로그인과 Firebase Storage 연결이 필요해요.');$('chatImageInput').value='';return}
- const button=$('chatAttach');button.disabled=true;
+ const button=$('chatAttach'),input=$('chatImageInput'),replaceId=input.dataset.replaceMessageId;button.disabled=true;
  try{
   const blob=await compressChatImage(file),id='chat_image_'+Date.now()+'_'+crypto.randomUUID();
   const path='chatImages/'+auth.currentUser.uid+'/'+id+'.jpg',target=storageRef(storage,path);
   await uploadBytes(target,blob,{contentType:'image/jpeg'});
   const imageUrl=await getDownloadURL(target);
-  await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,storagePath:path,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+  if(replaceId){
+   const old=chatMessagesCache.find(m=>m.id===replaceId);
+   if(!old||old.senderUid!==auth.currentUser.uid)throw new Error('내가 올린 사진만 수정할 수 있어요.');
+   await updateDoc(doc(db,'gyeongjuTrip',replaceId),{imageUrl,storagePath:path,editedAt:Date.now()});
+   if(old.storagePath){try{await deleteObject(storageRef(storage,old.storagePath))}catch(e){console.warn('Old image cleanup failed',e)}}
+   delete input.dataset.replaceMessageId;
+  }else{
+   await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,storagePath:path,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+  }
   localStorage.setItem(chatReadKey(),String(Date.now()));
  }catch(error){console.error('Chat image upload failed',error);toast(error.message||'사진 업로드에 실패했어요. Firebase Storage 설정을 확인해 주세요.')}
- finally{button.disabled=false;$('chatImageInput').value=''}
+ finally{button.disabled=false;input.value='';delete input.dataset.replaceMessageId}
 });
 
 $('chatInput').addEventListener('keydown',event=>{
