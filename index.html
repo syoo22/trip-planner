@@ -295,7 +295,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .chatMeta{font-size:9px;color:#9aa29a;padding:0 3px}
 .chatEmpty{margin:auto;text-align:center;color:#899189;font-size:12px;line-height:1.7}
 .chatComposer{display:flex;align-items:flex-end;gap:8px;padding:11px;border-top:1px solid #e8ebe5;background:#fff;flex-shrink:0}
-.chatInput{flex:1;min-width:0;resize:none;max-height:100px;border:1px solid #e5e9e2;border-radius:14px;padding:11px 12px;font:13px inherit;outline:none;background:#f9faf8}
+.chatInput{flex:1;min-width:0;resize:none;max-height:100px;border:1px solid #e5e9e2;border-radius:14px;padding:11px 12px;font:inherit;font-size:13px;outline:none;background:#f9faf8}
 .chatInput:focus{border-color:#9db8a4}
 .chatSend{width:42px;height:42px;flex:0 0 42px;border-radius:13px;background:#365c49;color:#fff;font-size:17px}
 .chatSend:disabled{opacity:.45}
@@ -764,6 +764,7 @@ function renderChatMessages(snap){
    return divider+'<div class="chatMessage '+(mine?'mine':'')+'">'+(mine?'':'<div class="chatSender">'+esc(m.senderName||'친구')+'</div>')+'<div class="chatBubble">'+esc(m.text)+'</div><div class="chatMeta">'+(mine?'나 · ':'')+time+'</div></div>';
   }).join('');
  }
+ if(chatIsOpen)localStorage.setItem(chatReadKey(),String(Date.now()));
  updateChatUnread();
  if(chatIsOpen)box.scrollTop=box.scrollHeight;
 }
