@@ -866,6 +866,7 @@ async function compressChatImage(file){
  canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
  return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('사진을 처리하지 못했어요.')),'image/jpeg',.82));
 }
+$('chatImageInput').addEventListener('cancel',()=>{delete $('chatImageInput').dataset.replaceMessageId});
 $('chatImageInput').addEventListener('change',async()=>{
  const file=$('chatImageInput').files?.[0];if(!file)return;
  if(!db||!storage||!auth?.currentUser){toast('사진 업로드를 위해 로그인과 Firebase Storage 연결이 필요해요.');$('chatImageInput').value='';return}
