@@ -290,7 +290,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .chatMessage{max-width:82%;display:flex;flex-direction:column;gap:4px;align-self:flex-start}
 .chatMessage.mine{align-self:flex-end;align-items:flex-end}
 .chatSender{font-size:10px;color:#788078;font-weight:750;padding:0 3px}
-.chatBubble{background:#fff;border:1px solid #e8ebe5;border-radius:4px 15px 15px 15px;padding:10px 12px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:#263128} .chatMessageTools{display:flex;gap:5px;opacity:.82} .chatMessageTools button{font-size:10px;color:#718075;background:#fff;border:1px solid #e4e9e2;border-radius:7px;padding:4px 8px} .chatMessageTools button.chatDelete{color:#b56b5b}
+.chatBubble{background:#fff;border:1px solid #e8ebe5;border-radius:4px 15px 15px 15px;padding:10px 12px;font-size:13px;line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere;color:#263128} .chatMessageTools{display:none;gap:5px;opacity:.82} .chatMessage.show-tools .chatMessageTools{display:flex} .chatMessage.mine .chatBubble{cursor:pointer;-webkit-user-select:none;user-select:none;touch-action:pan-y} .chatMessageTools button{font-size:10px;color:#718075;background:#fff;border:1px solid #e4e9e2;border-radius:7px;padding:4px 8px} .chatMessageTools button.chatDelete{color:#b56b5b}
 .chatMessage.mine .chatBubble{background:#dce9dc;border-color:#dce9dc;border-radius:15px 4px 15px 15px}
 .chatMeta{font-size:9px;color:#9aa29a;padding:0 3px}
 .chatEmpty{margin:auto;text-align:center;color:#899189;font-size:12px;line-height:1.7}
@@ -744,6 +744,14 @@ function updateChatUnread(){
  badge.textContent=unread>99?'99+':String(unread);
  badge.style.display=unread?'flex':'none';
 }
+let chatLongPressTimer=null;
+function revealChatActions(message){
+ document.querySelectorAll('.chatMessage.show-tools').forEach(el=>el.classList.remove('show-tools'));
+ message.classList.add('show-tools');
+}
+document.addEventListener('click',event=>{
+ if(!event.target.closest('.chatMessage'))document.querySelectorAll('.chatMessage.show-tools').forEach(el=>el.classList.remove('show-tools'));
+});
 function renderChatMessages(snap){
  chatMessagesCache=[];
  snap.forEach(d=>{const v=d.data();if(v.kind==='chatMessage'&&typeof v.text==='string')chatMessagesCache.push({...v,id:d.id})});
@@ -764,6 +772,16 @@ function renderChatMessages(snap){
    return divider+'<div class="chatMessage '+(mine?'mine':'')+'" data-message-id="'+esc(m.id)+'">'+(mine?'':'<div class="chatSender">'+esc(m.senderName||'친구')+'</div>')+'<div class="chatBubble">'+esc(m.text)+'</div><div class="chatMeta">'+(mine?'나 · ':'')+time+(m.editedAt?' · 수정됨':'')+'</div>'+(mine?'<div class="chatMessageTools"><button type="button" data-chat-edit="'+esc(m.id)+'">수정</button><button type="button" class="chatDelete" data-chat-delete="'+esc(m.id)+'">삭제</button></div>':'')+'</div>';
   }).join('');
  }
+ box.querySelectorAll('.chatMessage.mine .chatBubble').forEach(bubble=>{
+  const message=bubble.closest('.chatMessage');
+  const start=()=>{clearTimeout(chatLongPressTimer);chatLongPressTimer=setTimeout(()=>revealChatActions(message),480)};
+  const cancel=()=>clearTimeout(chatLongPressTimer);
+  bubble.addEventListener('pointerdown',start);
+  bubble.addEventListener('pointerup',cancel);
+  bubble.addEventListener('pointerleave',cancel);
+  bubble.addEventListener('pointercancel',cancel);
+  bubble.addEventListener('contextmenu',event=>{event.preventDefault();revealChatActions(message)});
+ });
  if(chatIsOpen)localStorage.setItem(chatReadKey(),String(Date.now()));
  box.querySelectorAll('[data-chat-edit]').forEach(button=>button.addEventListener('click',async()=>{
   const message=chatMessagesCache.find(x=>x.id===button.dataset.chatEdit);
