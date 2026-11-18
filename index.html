@@ -297,7 +297,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .chatComposer{display:flex;align-items:center;gap:9px;padding:9px 12px calc(9px + env(safe-area-inset-bottom));border-top:1px solid #e8ebe5;background:#fff;flex-shrink:0}
 .chatInput{flex:1;min-width:0;resize:none;height:46px;max-height:88px;border:1px solid #e5e9e2;border-radius:24px;padding:11px 15px;font-family:inherit;font-size:16px!important;line-height:1.4;outline:none;background:#f9faf8;touch-action:manipulation;-webkit-text-size-adjust:100%;-webkit-appearance:none;appearance:none;transform:translateZ(0)}
 .chatInput:focus{border-color:#9db8a4}
-.chatSend{width:46px;height:46px;flex:0 0 46px;border-radius:50%;background:#365c49;color:#fff;font-size:17px}.chatAttach{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:#f1f4ef;color:#365c49;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:400}.chatAttach:active{background:#e3ebe2}.chatImageInput{display:none}.chatImageBubble{padding:4px!important;background:#fff!important}.chatImageBubble img{display:block;width:min(230px,65vw);max-height:240px;object-fit:cover;border-radius:10px}
+.chatSend{width:46px;height:46px;flex:0 0 46px;border-radius:50%;background:#365c49;color:#fff;font-size:17px}.chatAttach{width:38px;height:38px;flex:0 0 38px;border-radius:50%;background:#f1f4ef;color:#365c49;display:flex;align-items:center;justify-content:center;font-size:23px;font-weight:400}.chatAttach:active{background:#e3ebe2}.chatImageInput{display:none}.chatImageBubble{padding:4px!important;background:#fff!important}.chatImageBubble img{display:block;width:min(160px,48vw);max-height:170px;object-fit:cover;border-radius:10px}
 .chatSend:disabled{opacity:.45}
 .chatStatus{font-size:9px;color:#9aa29a;padding:0 14px 7px;background:#fff}
 @media(max-width:520px){.chatLauncher{right:16px;bottom:17px;width:56px;height:56px}.chatWindow{right:10px;bottom:82px;width:calc(100vw - 20px);height:min(72dvh,590px);border-radius:19px}}
@@ -860,34 +860,53 @@ $('chatInput').addEventListener('input',()=>{
 $('chatAttach').addEventListener('click',()=>$('chatImageInput').click());
 async function compressChatImage(file){
  if(!file.type.startsWith('image/'))throw new Error('이미지 파일만 업로드할 수 있어요.');
- if(file.size>12*1024*1024)throw new Error('사진은 12MB 이하만 업로드할 수 있어요.');
- const bitmap=await createImageBitmap(file),scale=Math.min(1,1600/Math.max(bitmap.width,bitmap.height));
- const canvas=document.createElement('canvas');canvas.width=Math.round(bitmap.width*scale);canvas.height=Math.round(bitmap.height*scale);
- canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);bitmap.close();
- return await new Promise((resolve,reject)=>canvas.toBlob(blob=>blob?resolve(blob):reject(new Error('사진을 처리하지 못했어요.')),'image/jpeg',.82));
+ if(file.size>15*1024*1024)throw new Error('사진은 15MB 이하만 업로드할 수 있어요.');
+ const bitmap=await createImageBitmap(file);
+ let scale=Math.min(1,1100/Math.max(bitmap.width,bitmap.height)),blob=null;
+ for(let attempt=0;attempt<8;attempt++){
+  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.round(bitmap.width*scale));canvas.height=Math.max(1,Math.round(bitmap.height*scale));
+  canvas.getContext('2d').drawImage(bitmap,0,0,canvas.width,canvas.height);
+  blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/jpeg',Math.max(.48,.72-attempt*.04)));
+  if(blob&&blob.size<=430*1024)break;
+  scale*=.82;
+ }
+ bitmap.close();
+ if(!blob||blob.size>480*1024)throw new Error('사진 용량을 줄이지 못했어요. 다른 사진을 선택해 주세요.');
+ return blob;
+}
+async function chatBlobToDataUrl(blob){
+ return await new Promise((resolve,reject)=>{
+  const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(new Error('사진을 읽지 못했어요.'));reader.readAsDataURL(blob);
+ });
 }
 $('chatImageInput').addEventListener('cancel',()=>{delete $('chatImageInput').dataset.replaceMessageId});
 $('chatImageInput').addEventListener('change',async()=>{
  const file=$('chatImageInput').files?.[0];if(!file)return;
- if(!db||!storage||!auth?.currentUser){toast('사진 업로드를 위해 로그인과 Firebase Storage 연결이 필요해요.');$('chatImageInput').value='';return}
- const button=$('chatAttach'),input=$('chatImageInput'),replaceId=input.dataset.replaceMessageId;button.disabled=true;
+ if(!db||!auth?.currentUser){toast('채팅 서버에 연결한 뒤 다시 시도해 주세요.');$('chatImageInput').value='';return}
+ const button=$('chatAttach'),input=$('chatImageInput'),replaceId=input.dataset.replaceMessageId;
+ button.disabled=true;
  try{
-  const blob=await compressChatImage(file),id='chat_image_'+Date.now()+'_'+crypto.randomUUID();
-  const path='chatImages/'+auth.currentUser.uid+'/'+id+'.jpg',target=storageRef(storage,path);
-  await uploadBytes(target,blob,{contentType:'image/jpeg'});
-  const imageUrl=await getDownloadURL(target);
+  const blob=await compressChatImage(file);
+  const imageUrl=await chatBlobToDataUrl(blob);
+  const id='chat_image_'+Date.now()+'_'+crypto.randomUUID();
   if(replaceId){
    const old=chatMessagesCache.find(m=>m.id===replaceId);
    if(!old||old.senderUid!==auth.currentUser.uid)throw new Error('내가 올린 사진만 수정할 수 있어요.');
-   await updateDoc(doc(db,'gyeongjuTrip',replaceId),{imageUrl,storagePath:path,editedAt:Date.now()});
-   if(old.storagePath){try{await deleteObject(storageRef(storage,old.storagePath))}catch(e){console.warn('Old image cleanup failed',e)}}
-   delete input.dataset.replaceMessageId;
+   await updateDoc(doc(db,'gyeongjuTrip',replaceId),{imageUrl,editedAt:Date.now()});
+   if(old.storagePath&&storage){try{await deleteObject(storageRef(storage,old.storagePath))}catch(e){console.warn('Old image cleanup failed',e)}}
+   toast('사진을 변경했어요.');
   }else{
-   await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,storagePath:path,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+   await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+   toast('사진을 공유했어요.');
   }
   localStorage.setItem(chatReadKey(),String(Date.now()));
- }catch(error){console.error('Chat image upload failed',error);toast(error.message||'사진 업로드에 실패했어요. Firebase Storage 설정을 확인해 주세요.')}
- finally{button.disabled=false;input.value='';delete input.dataset.replaceMessageId}
+  updateChatUnread();
+ }catch(error){
+  console.error('Chat image upload failed',error);
+  toast(error.code==='permission-denied'?'사진 저장 권한이 없어요. Firestore 보안 규칙을 확인해 주세요.':(error.message||'사진 업로드에 실패했어요.'));
+ }finally{
+  button.disabled=false;input.value='';delete input.dataset.replaceMessageId;
+ }
 });
 
 $('chatInput').addEventListener('keydown',event=>{
