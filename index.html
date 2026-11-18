@@ -809,9 +809,6 @@ function setChatOpen(open){
   updateChatUnread();
   requestAnimationFrame(()=>{
    $('chatMessages').scrollTop=$('chatMessages').scrollHeight;
-   const input=$('chatInput');
-   input.focus({preventScroll:true});
-   syncChatViewport();
   });
  }else{
   $('chatInput').blur();
