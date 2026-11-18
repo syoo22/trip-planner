@@ -774,17 +774,12 @@ function renderChatMessages(snap){
  }
  box.querySelectorAll('.chatMessage.mine .chatBubble').forEach(bubble=>{
   const message=bubble.closest('.chatMessage');
-  const start=()=>{clearTimeout(chatLongPressTimer);chatLongPressTimer=setTimeout(()=>revealChatActions(message),550)};
-  const cancel=()=>clearTimeout(chatLongPressTimer);
-  bubble.addEventListener('touchstart',start,{passive:true});
-  bubble.addEventListener('touchend',cancel,{passive:true});
-  bubble.addEventListener('touchmove',cancel,{passive:true});
-  bubble.addEventListener('touchcancel',cancel,{passive:true});
-  bubble.addEventListener('pointerdown',event=>{if(event.pointerType!=='touch')start()});
-  bubble.addEventListener('pointerup',cancel);
-  bubble.addEventListener('pointerleave',cancel);
-  bubble.addEventListener('pointercancel',cancel);
-  bubble.addEventListener('contextmenu',event=>{event.preventDefault();revealChatActions(message)});
+  bubble.addEventListener('click',event=>{
+   event.stopPropagation();
+   const wasOpen=message.classList.contains('show-tools');
+   document.querySelectorAll('.chatMessage.show-tools').forEach(el=>el.classList.remove('show-tools'));
+   if(!wasOpen)message.classList.add('show-tools');
+  });
  });
  if(chatIsOpen)localStorage.setItem(chatReadKey(),String(Date.now()));
  box.querySelectorAll('[data-chat-edit]').forEach(button=>button.addEventListener('click',async()=>{
