@@ -822,7 +822,7 @@ function renderRoulettes(){
   });
  });
  const area=$('roulettePlayArea');
- const item=state.oulettes?.find(x=>x.id===selectedRouletteId) || state.roulettes.find(x=>x.id===selectedRouletteId);
+ const item=state.roulettes.find(x=>x.id===selectedRouletteId);
  if(!item){area.hidden=true;area.innerHTML='';return}
  area.hidden=false;
  const colors=['#dce9dc','#f2e8d8','#e8e5ef','#e8dcd5','#dce7e9','#f2ebcf','#e5e9df','#eadfe8'];
