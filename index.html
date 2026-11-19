@@ -335,6 +335,18 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .chatStatus{font-size:9px;color:#9aa29a;padding:0 14px 7px;background:#fff}
 @media(max-width:520px){.chatLauncher{right:16px;bottom:17px;width:56px;height:56px}.chatWindow{right:10px;bottom:82px;width:calc(100vw - 20px);height:min(72dvh,590px);border-radius:19px}}
 
+/* 모바일 일정 모달 시간 선택 필드 overflow fix */
+#planModal .modal{width:min(520px,100%);max-width:100%;box-sizing:border-box;overflow-x:hidden}
+#planModal .formGrid,#planModal .field{min-width:0;max-width:100%;box-sizing:border-box}
+#planModal #planTime{width:100%;min-width:0;max-width:100%;display:block;box-sizing:border-box;overflow:hidden}
+@media(max-width:650px){
+ #planModal{padding:10px;overflow-x:hidden}
+ #planModal .modal{width:100%;min-width:0;padding:18px;overflow-x:hidden}
+ #planModal .formGrid{grid-template-columns:minmax(0,1fr);width:100%;min-width:0}
+ #planModal .field{width:100%;min-width:0}
+ #planModal #planTime{width:100%!important;min-width:0!important;max-width:100%!important;padding-left:10px;padding-right:10px;font-size:16px;appearance:none;-webkit-appearance:none}
+ #planModal #planTime::-webkit-date-and-time-value{margin:0;text-align:left;white-space:nowrap}
+}
 </style>
 </head>
 <body>
@@ -1345,15 +1357,3 @@ startFirebaseAuth();
 </script>
 </body>
 </html>
-/* 모바일 일정 모달 시간 선택 필드 overflow fix */
-#planModal .modal{width:min(520px,100%);max-width:100%;box-sizing:border-box;overflow-x:hidden}
-#planModal .formGrid,#planModal .field{min-width:0;max-width:100%;box-sizing:border-box}
-#planModal #planTime{width:100%;min-width:0;max-width:100%;display:block;box-sizing:border-box;overflow:hidden}
-@media(max-width:650px){
- #planModal{padding:10px;overflow-x:hidden}
- #planModal .modal{width:100%;min-width:0;padding:18px;overflow-x:hidden}
- #planModal .formGrid{grid-template-columns:minmax(0,1fr);width:100%;min-width:0}
- #planModal .field{width:100%;min-width:0}
- #planModal #planTime{width:100%!important;min-width:0!important;max-width:100%!important;padding-left:10px;padding-right:10px;font-size:16px;appearance:none;-webkit-appearance:none}
- #planModal #planTime::-webkit-date-and-time-value{margin:0;text-align:left;white-space:nowrap}
-}
