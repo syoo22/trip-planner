@@ -1345,3 +1345,15 @@ startFirebaseAuth();
 </script>
 </body>
 </html>
+/* 모바일 일정 모달 시간 선택 필드 overflow fix */
+#planModal .modal{width:min(520px,100%);max-width:100%;box-sizing:border-box;overflow-x:hidden}
+#planModal .formGrid,#planModal .field{min-width:0;max-width:100%;box-sizing:border-box}
+#planModal #planTime{width:100%;min-width:0;max-width:100%;display:block;box-sizing:border-box;overflow:hidden}
+@media(max-width:650px){
+ #planModal{padding:10px;overflow-x:hidden}
+ #planModal .modal{width:100%;min-width:0;padding:18px;overflow-x:hidden}
+ #planModal .formGrid{grid-template-columns:minmax(0,1fr);width:100%;min-width:0}
+ #planModal .field{width:100%;min-width:0}
+ #planModal #planTime{width:100%!important;min-width:0!important;max-width:100%!important;padding-left:10px;padding-right:10px;font-size:16px;appearance:none;-webkit-appearance:none}
+ #planModal #planTime::-webkit-date-and-time-value{margin:0;text-align:left;white-space:nowrap}
+}
