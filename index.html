@@ -1028,8 +1028,20 @@ function render(){
  let paid={};people.forEach(p=>paid[p]=0);state.expenses.forEach(e=>{if(paid[e.by]!==undefined)paid[e.by]+=Number(e.amount||0)});
  const baseShare=Math.floor(total/people.length),remainder=total%people.length;
  let balances=people.map((name,index)=>({name,net:paid[name]-(baseShare+(index<remainder?1:0))}));
- let debtors=balances.filter(x=>x.net<-.5).map(x=>({...x,amount:Math.round(-x.net)})),creditors=balances.filter(x=>x.net>.5).map(x=>({...x,amount:Math.round(x.net)})),transfers=[];let di=0,ci=0;
- while(di<debtors.length&&ci<creditors.length){let amount=Math.min(debtors[di].amount,creditors[ci].amount);if(amount>0)transfers.push({from:debtors[di].name,to:creditors[ci].name,amount});debtors[di].amount-=amount;creditors[ci].amount-=amount;if(debtors[di].amount<=0)di++;if(creditors[ci].amount<=0)ci++}
+ let debtors=balances.filter(x=>x.net<-.5).map(x=>({...x,amount:Math.round(-x.net)})),creditors=balances.filter(x=>x.net>.5).map(x=>({...x,amount:Math.round(x.net)})),transfers=[];
+ // Custom settlement route: when there are two payers and two receivers,
+ // split each payer's debt 5:2 between the primary and secondary receiver.
+ // The secondary receiver then forwards any excess above their own net credit.
+ const customRoute=debtors.length===2&&creditors.length===2;
+ if(customRoute){
+  const primary=creditors[0],secondary=creditors[1],incomingSecondary=debtors.reduce((sum,d)=>sum+Math.round(d.amount*2/7),0);
+  const forward=incomingSecondary-secondary.amount;
+  if(forward>=0&&forward<=debtors.reduce((sum,d)=>sum+Math.round(d.amount*5/7),0)){
+   debtors.forEach(d=>{const toPrimary=Math.round(d.amount*5/7),toSecondary=d.amount-toPrimary;if(toPrimary>0)transfers.push({from:d.name,to:primary.name,amount:toPrimary});if(toSecondary>0)transfers.push({from:d.name,to:secondary.name,amount:toSecondary})});
+   if(forward>0)transfers.push({from:secondary.name,to:primary.name,amount:forward});
+  }else customRoute=false;
+ }
+ if(!customRoute){let di=0,ci=0;while(di<debtors.length&&ci<creditors.length){let amount=Math.min(debtors[di].amount,creditors[ci].amount);if(amount>0)transfers.push({from:debtors[di].name,to:creditors[ci].name,amount});debtors[di].amount-=amount;creditors[ci].amount-=amount;if(debtors[di].amount<=0)di++;if(creditors[ci].amount<=0)ci++}}
  $('settlementStatus').textContent=state.expenses.length?'정산 계산 완료':'기록 대기';
  $('settlementResult').innerHTML=state.expenses.length
  ?'<div class="settlementQuick"><div><span>1인당 부담액</span><strong>'+money(Math.ceil(total/people.length))+'</strong></div><div><span>총 송금</span><strong>'+transfers.length+'회</strong></div></div><div class="settlementTransferHead"><h4>최종 송금 내역</h4><p>아래 금액대로 송금하면 정산이 끝나요.</p></div>'+(transfers.length?transfers.map(t=>'<div class="settleRow"><div class="settleTransferPeople"><b>'+esc(t.from)+'</b><span class="settleArrow">→</span><b>'+esc(t.to)+'</b></div><strong>'+money(t.amount)+'</strong></div>').join(''):'<div class="settleNoTransfer">모두 정산 완료! 보낼 금액이 없어요.</div>')+'<details class="settlementDetails"><summary>개인별 결제 내역 보기</summary><div class="settlementPaidList">'+people.map(name=>'<div class="settlementPaidItem"><span>'+esc(name)+'</span><b>'+money(paid[name])+'</b></div>').join('')+'</div></details>'
