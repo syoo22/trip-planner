@@ -1046,7 +1046,7 @@ function render(){
  for(let i=0;i<people.length;i++)for(let j=i+1;j<people.length;j++){
   const a=people[i],b=people[j],ab=pairDebt[a+'|'+b],ba=pairDebt[b+'|'+a],net=Math.round(ab-ba);
   if(net>0)transfers.push({from:a,to:b,amount:net});
-  else if(net<0)transfers.push({from:b,to:a,amount:-net);
+  else if(net<0)transfers.push({from:b,to:a,amount:-net});
  }
  $('settlementStatus').textContent=state.expenses.length?'정산 계산 완료':'기록 대기';
  $('settlementResult').innerHTML=state.expenses.length
