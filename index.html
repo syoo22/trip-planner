@@ -857,7 +857,7 @@ function renderChatMessages(snap){
    const divider=day!==previousDay?'<div class="chatDateDivider">'+day+'</div>':'';
    previousDay=day;
    const isImage=m.kind==='chatImage';
-   const quote=m.replyTo?'<button type="button" class="chatReplyQuote" data-chat-jump="'+esc(m.replyTo.id)+'"><strong>'+esc(m.replyTo.senderName||'친구')+'에게 답장</strong>'+esc(m.replyTo.text||'사진')+'</button>':'';
+   const quote='';
    const bubble=isImage?'<div class="chatBubble chatImageBubble">'+quote+'<img src="'+esc(m.imageUrl)+'" alt="공유된 사진" loading="lazy"></div>':'<div class="chatBubble">'+quote+esc(m.text)+'</div>';
    const reactions=['❤️','👍','😂','😮'];
    const reactionHtml=reactions.map(emoji=>{
@@ -877,9 +877,7 @@ function renderChatMessages(snap){
    if(!wasOpen)message.classList.add('show-tools');
   });
  });
- box.querySelectorAll('[data-chat-reply]').forEach(button=>button.addEventListener('click',event=>{
-  event.stopPropagation();const message=chatMessagesCache.find(x=>x.id===button.dataset.chatReply);if(message)setChatReply(message);
- }));
+
  box.querySelectorAll('[data-chat-jump]').forEach(button=>button.addEventListener('click',()=>{
   const target=box.querySelector('[data-message-id="'+CSS.escape(button.dataset.chatJump)+'"]');
   if(target){target.scrollIntoView({behavior:'smooth',block:'center'});target.classList.add('highlight-message');setTimeout(()=>target.classList.remove('highlight-message'),1300)}
@@ -955,8 +953,7 @@ $('chatForm').addEventListener('submit',async event=>{
  button.disabled=true;
  try{
   const id='chat_'+Date.now()+'_'+crypto.randomUUID();
-  const replyTo=chatReplyTarget?{...chatReplyTarget}:null;
-  await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatMessage',id,text:textValue,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now(),...(replyTo?{replyTo}:{})});
+  await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatMessage',id,text:textValue,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
   input.value='';
   input.style.height='auto';clearChatReply();scheduleTypingStatus();
   localStorage.setItem(chatReadKey(),String(Date.now()));
@@ -1010,9 +1007,8 @@ $('chatImageInput').addEventListener('change',async()=>{
    if(old.storagePath&&storage){try{await deleteObject(storageRef(storage,old.storagePath))}catch(e){console.warn('Old image cleanup failed',e)}}
    toast('사진을 변경했어요.');
   }else{
-   const replyTo=chatReplyTarget?{...chatReplyTarget}:null;
-   await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now(),...(replyTo?{replyTo}:{})});
-   clearChatReply();toast('사진을 공유했어요.');
+   await setDoc(doc(db,'gyeongjuTrip',id),{kind:'chatImage',id,imageUrl,senderName:getCurrentMemberName(),senderUid:auth.currentUser.uid,createdAt:Date.now()});
+   toast('사진을 공유했어요.');
   }
   localStorage.setItem(chatReadKey(),String(Date.now()));
   updateChatUnread();
