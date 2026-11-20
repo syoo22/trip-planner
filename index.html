@@ -535,8 +535,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
  </div>
  <div class="chatMessages" id="chatMessages" aria-live="polite"><div class="chatEmpty">대화를 불러오는 중이에요.</div></div>
  <div class="chatTypingIndicator" id="chatTypingIndicator" aria-live="polite"></div>
- <div class="chatReplyPreview" id="chatReplyPreview"><div class="chatReplyPreviewText" id="chatReplyPreviewText"></div><button class="chatReplyCancel" id="chatReplyCancel" type="button" aria-label="답장 취소">×</button></div>
- <form class="chatComposer" id="chatForm">
+  <form class="chatComposer" id="chatForm">
   <input class="chatImageInput" id="chatImageInput" type="file" accept="image/*" aria-label="사진 선택">
   <button class="chatAttach" id="chatAttach" type="button" aria-label="사진 업로드">＋</button>
   <textarea class="chatInput" id="chatInput" rows="1" maxlength="1000" placeholder="메시지를 입력하세요" aria-label="메시지 입력"></textarea>
@@ -797,19 +796,6 @@ function updateChatTypingIndicator(){
  const el=$('chatTypingIndicator');if(!el)return;
  el.textContent=names.length===0?'':names.length===1?names[0]+'님이 입력 중...':names.length+'명이 입력 중...';
 }
-function setChatReply(message){
- if(!message)return;
- chatReplyTarget={id:message.id,senderName:message.senderName||'친구',text:message.kind==='chatImage'?'사진':message.text,kind:message.kind};
- $('chatReplyPreviewText').innerHTML='<strong>'+esc(chatReplyTarget.senderName)+'에게 답장</strong>'+esc(chatReplyTarget.text||'사진');
- $('chatReplyPreview').classList.add('show');
- $('chatInput').focus({preventScroll:true});
-}
-function clearChatReply(){
- chatReplyTarget=null;
- $('chatReplyPreview').classList.remove('show');
- $('chatReplyPreviewText').textContent='';
-}
-$('chatReplyCancel').addEventListener('click',clearChatReply);
 async function updateMyTyping(isTyping){
  if(!db||!auth?.currentUser)return;
  const id='chat_typing_'+auth.currentUser.uid;
