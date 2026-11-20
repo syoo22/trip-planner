@@ -1310,7 +1310,7 @@ setInterval(updateTripCountdown,1000);
 async function startFirebaseAuth(){
  try{
   const cfg=JSON.parse(settings.firebaseConfig||'{}');
-  firebaseApp=initializeApp(cfg);
+  firebaseApp=getApps().length?getApp():initializeApp(cfg);
   auth=getAuth(firebaseApp);
   onAuthStateChanged(auth,async user=>{
    if(user){
@@ -1349,6 +1349,7 @@ $('loginForm').addEventListener('submit',async event=>{
  }catch(err){
   console.error(err);
   const code=err.code||'unknown';
+  console.error('Firebase login error code:',code,'message:',err.message);
   const messages={
    'auth/invalid-credential':'이메일 또는 비밀번호를 확인해 주세요.',
    'auth/wrong-password':'이메일 또는 비밀번호를 확인해 주세요.',
@@ -1357,6 +1358,9 @@ $('loginForm').addEventListener('submit',async event=>{
    'auth/network-request-failed':'네트워크 연결을 확인한 뒤 다시 시도해 주세요.',
    'auth/operation-not-allowed':'로그인 방식이 비활성화되어 있어요. 관리자 확인이 필요해요.',
    'auth/invalid-api-key':'Firebase 설정 오류예요. 관리자 확인이 필요해요.',
+   'auth/unauthorized-domain':'현재 웹사이트 도메인이 Firebase 인증에 등록되어 있지 않아요. Firebase 콘솔의 승인된 도메인을 확인해 주세요.',
+   'auth/invalid-email':'이메일 형식이 올바르지 않아요.',
+   'auth/weak-password':'비밀번호가 너무 짧아요.',
    'auth/app-not-authorized':'현재 웹사이트 도메인이 Firebase에서 허용되지 않았어요. 관리자 확인이 필요해요.'
   };
   $('tripGateError').textContent=(messages[code]||'로그인에 실패했어요. 오류 코드: '+code);
