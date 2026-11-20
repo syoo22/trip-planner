@@ -1026,22 +1026,28 @@ function render(){
  state.plans.forEach(p=>{if(p.day==='DAY 3')p.day='DAY 2'});let days=['DAY 1','DAY 2'];$('scheduleList').innerHTML=days.map(d=>`<div class="day"><div class="dayHead"><strong>${d} <span style="font-size:13px;font-weight:600;color:var(--muted);margin-left:7px">${d==='DAY 1'?'11/21':'11/22'}</span></strong><span class="tag">${state.plans.filter(p=>p.day===d).length} PLANS</span></div><div class="timeline" data-day="${d}">${state.plans.filter(p=>p.day===d).slice().sort((a,b)=>{const toMinutes=t=>{const [h,m]=String(t||'0:0').split(':').map(Number);return (h||0)*60+(m||0)};return toMinutes(a.time)-toMinutes(b.time)}).map(p=>`<div class="planItem"><span class="planTime">${esc(p.time)}</span><span class="planName"><span style="display:inline-flex;align-items:center;gap:5px"><span aria-hidden="true">${({'맛집':'🍽️','카페':'☕','관광지':'📷','숙소':'🏠'}[p.category]||'📍')}</span><span>${esc(p.name)}</span></span><small style="display:block;color:#8a938a;font-weight:500;margin-top:3px">${esc(p.by||'작성자 미지정')}</small>${p.note?`<small style="display:block;color:#8a938a;font-weight:400;margin-top:3px">${esc(p.note)}</small>`:''}</span><div style="display:flex;gap:5px;align-items:center"><button class="mini" onclick="event.stopPropagation();editPlan('${p.id}')">수정</button><button class="mini" onclick="event.stopPropagation();deletePlan('${p.id}')">삭제</button></div></div>`).join('')||'<div class="empty">아직 등록된 일정이 없어요.</div>'}</div></div>`).join('');
  let total=state.expenses.reduce((s,e)=>s+Number(e.amount||0),0),people=['시연','민경','다인','윤진'];$('totalExpense').textContent=money(total);$('perPerson').textContent=money(Math.ceil(total/people.length));$('expenseCount').textContent=state.expenses.length+'건';$('expenseToday').textContent=new Date().toISOString().slice(0,10);$('expenseDayCount').textContent=state.expenses.length+'건';
  let paid={};people.forEach(p=>paid[p]=0);state.expenses.forEach(e=>{if(paid[e.by]!==undefined)paid[e.by]+=Number(e.amount||0)});
- const baseShare=Math.floor(total/people.length),remainder=total%people.length;
- let balances=people.map((name,index)=>({name,net:paid[name]-(baseShare+(index<remainder?1:0))}));
- let debtors=balances.filter(x=>x.net<-.5).map(x=>({...x,amount:Math.round(-x.net)})),creditors=balances.filter(x=>x.net>.5).map(x=>({...x,amount:Math.round(x.net)})),transfers=[];
- // Custom settlement route: when there are two payers and two receivers,
- // split each payer's debt 5:2 between the primary and secondary receiver.
- // The secondary receiver then forwards any excess above their own net credit.
- let customRoute=debtors.length===2&&creditors.length===2;
- if(customRoute){
-  const primary=creditors[0],secondary=creditors[1],incomingSecondary=debtors.reduce((sum,d)=>sum+Math.round(d.amount*2/7),0);
-  const forward=incomingSecondary-secondary.amount;
-  if(forward>=0&&forward<=debtors.reduce((sum,d)=>sum+Math.round(d.amount*5/7),0)){
-   debtors.forEach(d=>{const toPrimary=Math.round(d.amount*5/7),toSecondary=d.amount-toPrimary;if(toPrimary>0)transfers.push({from:d.name,to:primary.name,amount:toPrimary});if(toSecondary>0)transfers.push({from:d.name,to:secondary.name,amount:toSecondary})});
-   if(forward>0)transfers.push({from:secondary.name,to:primary.name,amount:forward});
-  }else customRoute=false;
+ const transfers=[];
+ // Pairwise settlement: for each expense, every other participant owes the payer
+ // their equal share. Net each pair's reciprocal debts before displaying transfers.
+ const pairDebt={};
+ people.forEach(a=>people.forEach(b=>{if(a!==b)pairDebt[a+'|'+b]=0}));
+ state.expenses.forEach(e=>{
+  const payer=e.by;
+  if(!people.includes(payer))return;
+  const amount=Math.max(0,Math.round(Number(e.amount)||0));
+  const base=Math.floor(amount/people.length),rem=amount%people.length;
+  people.forEach((person,index)=>{
+   if(person===payer)return;
+   const share=base+(index<rem?1:0);
+   pairDebt[person+'|'+payer]+=share;
+  });
+ });
+ const transfers=[];
+ for(let i=0;i<people.length;i++)for(let j=i+1;j<people.length;j++){
+  const a=people[i],b=people[j],ab=pairDebt[a+'|'+b],ba=pairDebt[b+'|'+a],net=Math.round(ab-ba);
+  if(net>0)transfers.push({from:a,to:b,amount:net});
+  else if(net<0)transfers.push({from:b,to:a,amount:-net);
  }
- if(!customRoute){let di=0,ci=0;while(di<debtors.length&&ci<creditors.length){let amount=Math.min(debtors[di].amount,creditors[ci].amount);if(amount>0)transfers.push({from:debtors[di].name,to:creditors[ci].name,amount});debtors[di].amount-=amount;creditors[ci].amount-=amount;if(debtors[di].amount<=0)di++;if(creditors[ci].amount<=0)ci++}}
  $('settlementStatus').textContent=state.expenses.length?'정산 계산 완료':'기록 대기';
  $('settlementResult').innerHTML=state.expenses.length
  ?'<div class="settlementTransferHead"><h4>최종 송금 내역</h4><p>아래 금액대로 송금하면 정산이 끝나요.</p></div>'+(transfers.length?transfers.map(t=>'<div class="settleRow"><div class="settleTransferPeople"><b>'+esc(t.from)+'</b><span class="settleArrow">→</span><b>'+esc(t.to)+'</b></div><strong>'+money(t.amount)+'</strong></div>').join(''):'<div class="settleNoTransfer">모두 정산 완료! 보낼 금액이 없어요.</div>')+'<details class="settlementDetails"><summary>개인별 결제 내역 보기</summary><div class="settlementPaidList">'+people.map(name=>'<div class="settlementPaidItem"><span>'+esc(name)+'</span><b>'+money(paid[name])+'</b></div>').join('')+'</div></details>'
