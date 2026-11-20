@@ -1032,7 +1032,7 @@ function render(){
  // Custom settlement route: when there are two payers and two receivers,
  // split each payer's debt 5:2 between the primary and secondary receiver.
  // The secondary receiver then forwards any excess above their own net credit.
- const customRoute=debtors.length===2&&creditors.length===2;
+ let customRoute=debtors.length===2&&creditors.length===2;
  if(customRoute){
   const primary=creditors[0],secondary=creditors[1],incomingSecondary=debtors.reduce((sum,d)=>sum+Math.round(d.amount*2/7),0);
   const forward=incomingSecondary-secondary.amount;
