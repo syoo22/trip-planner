@@ -362,6 +362,15 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
 .settlementGroupRow i{font-style:normal;font-weight:800;color:var(--green);margin-right:7px}
 .settlementGroupRow strong{font-size:12px;font-variant-numeric:tabular-nums;white-space:nowrap}
 @media(max-width:520px){.settlementGroup{padding:10px 12px;margin-top:7px}.settlementGroupHead{padding-bottom:7px}.settlementGroupRow{padding:7px 0;font-size:11px}}
+
+/* Compact expense-row actions: keep edit/delete side-by-side on mobile */
+@media(max-width:520px){
+ .expenseEntry{gap:6px;padding:11px 0;align-items:center}
+ .expenseEntryInfo{flex:1;min-width:0}
+ .expenseEntryRight{flex-direction:row;align-items:center;gap:4px;white-space:nowrap}
+ .expenseEntryRight b{font-size:13px}
+ .expenseDelete{padding:4px 6px;font-size:9px}
+}
 </style>
 </head>
 <body>
@@ -397,8 +406,7 @@ button,input,select,textarea{font:inherit}button{cursor:pointer;border:0}
       <div class="countdownUnit"><strong id="countdownMinutes">00</strong><span>MINUTES</span></div>
       <b>:</b>
       <div class="countdownUnit"><strong id="countdownSeconds">00</strong><span>SECONDS</span></div>
-    </div>
-    <p id="countdownMessage">우리의 여행이 곧 시작돼요!</p>
+    </div>    <p id="countdownMessage">우리의 여행이 곧 시작돼요!</p>
       </section>
     </div>
   </section>
@@ -797,8 +805,7 @@ window.addWish=()=>{const name=$('wishName').value.trim();if(!name)return toast(
 
 /* Shared group chat: stored separately from trip records so trip changes never affect messages. */
 let chatMessagesCache=[],chatIsOpen=false,chatReactionCache=[],chatTypingCache=[],chatTypingTimer=null,chatTypingStopTimer=null;
-function chatReadKey(){return 'trip-chat-last-read-v1-'+(auth?.currentUser?.uid||'guest')}
-function updateChatUnread(){
+function chatReadKey(){return 'trip-chat-last-read-v1-'+(auth?.currentUser?.uid||'guest')}function updateChatUnread(){
  const lastRead=Number(localStorage.getItem(chatReadKey())||0);
  const unread=chatMessagesCache.filter(m=>m.senderUid!==auth?.currentUser?.uid&&Number(m.createdAt||0)>lastRead).length;
  const badge=$('chatUnread');
@@ -1097,8 +1104,7 @@ async function connectServices(){
   db=getFirestore(firebaseApp);
   storage=getStorage(firebaseApp);
   if(unsubscribe)unsubscribe();
-  unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),async snap=>{
-   latestTripSnapshot=snap;
+  unsubscribe=onSnapshot(collection(db,'gyeongjuTrip'),async snap=>{   latestTripSnapshot=snap;
     renderChatMessages(snap);
    const meta=[];const presenceDocs=[];let defaultTripDeleted=false;
    snap.forEach(d=>{const v=d.data();if(v.kind==='trip')meta.push({...v,docId:d.id});if(v.kind==='presence')presenceDocs.push(v);if(v.kind==='tripDeleted'&&v.id===DEFAULT_TRIP_ID)defaultTripDeleted=true});
